@@ -12,5 +12,21 @@ export const setupApp = (app: Express) => {
   ) => {
     res.status(200).send(db.videos);
   });
+
+  app.get("/videos/:id", (
+    req: Request<{ id: string }, Video, {}, {}>,
+    res: Response<Video | null>,
+  ) => {
+    const id = req.params.id;
+    const videoById = db.videos.find((k) => k.id === +id)
+
+    if (!videoById) {
+      res.sendStatus(404);
+      return;
+    }
+
+    res.status(200).send(videoById);
+  });
+
   return app;
 };
