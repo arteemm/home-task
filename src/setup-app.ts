@@ -1,6 +1,6 @@
 import express, { Express, Request, Response } from "express";
 import { db } from './db/in-memory.db';
-import { Video } from './videos/types/video';
+import { Video, CreateVideo } from './videos/types/video';
  
 export const setupApp = (app: Express) => {
   app.use(express.json()); // middleware для парсинга JSON в теле запроса
@@ -27,6 +27,26 @@ export const setupApp = (app: Express) => {
 
     res.status(200).send(videoById);
   });
+
+  app.post("/videos", (
+    req: Request<CreateVideo>,
+    res: Response<Video | null>,
+  ) => {
+    const newVideo: Video = {
+      id : + new Date(),
+      title: req.body.title,
+      author: req.body.title,
+      canBeDownloaded: false,
+      minAgeRestriction: null,
+      createdAt: new Date(),
+      publicationDate: new Date(),
+      availableResolutions: req.body.availableResolutions,
+    }
+
+    db.videos.push(newVideo);    
+    res.status(201).send(db.videos[db.videos.length - 1]);
+  });
+
 
   app.delete("/videos/:id", (
     req: Request<{ id: string }, {}, {}, {}>,

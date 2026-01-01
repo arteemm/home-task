@@ -19,3 +19,9 @@ export type Video = {
     publicationDate: Date;
     availableResolutions: AvailableResolutions[];
 };
+
+export type CreateVideo = {
+    title: string;
+    author: string;
+    availableResolutions: AvailableResolutions[];
+};
