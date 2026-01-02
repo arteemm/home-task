@@ -1,6 +1,6 @@
 import express, { Express, Request, Response } from "express";
 import { db } from './db/in-memory.db';
-import { Video, CreateVideo } from './videos/types/video';
+import { Video, CreateVideo, ChangeVideo } from './videos/types/video';
  
 export const setupApp = (app: Express) => {
   app.use(express.json()); // middleware для парсинга JSON в теле запроса
@@ -18,7 +18,7 @@ export const setupApp = (app: Express) => {
     res: Response<Video | null>,
   ) => {
     const id = req.params.id;
-    const videoById = db.videos.find((k: Video) => k.id === +id)
+    const videoById = db.videos.find((k: Video) => k.id === +id);
 
     if (!videoById) {
       res.sendStatus(404);
@@ -45,6 +45,17 @@ export const setupApp = (app: Express) => {
 
     db.videos.push(newVideo);    
     res.status(201).send(db.videos[db.videos.length - 1]);
+  });
+
+  app.put("/videos/:id", (
+    req: Request<{ id: string }, {}, ChangeVideo, {}>,
+    res: Response,
+  ) => {
+    const id = req.params.id;
+    const indexInDb = db.videos.findIndex((k: Video) => k.id === +id);
+    db.videos[indexInDb] = { ...db.videos[indexInDb], ...req.body};
+
+    res.sendStatus(204);
   });
 
 

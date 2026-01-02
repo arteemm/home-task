@@ -20,8 +20,6 @@ export type Video = {
     availableResolutions: AvailableResolutions[];
 };
 
-export type CreateVideo = {
-    title: string;
-    author: string;
-    availableResolutions: AvailableResolutions[];
-};
+export type CreateVideo = Pick<Video, 'title' | 'author' | 'availableResolutions'>;
+
+export type ChangeVideo = Omit<Video, 'id' | 'createdAt'>;
