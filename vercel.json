@@ -1,0 +1,19 @@
+{
+
+   "version": 2,
+
+   "name": "home-task-1",
+
+   "builds": [
+
+      { "src": "scr/index.ts", "use": "@vercel/node" }
+
+   ],
+
+   "routes": [
+
+      { "src": "/(.*)", "dest": "scr/index.ts" }
+
+   ]
+
+}
