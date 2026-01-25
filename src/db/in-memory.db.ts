@@ -8,8 +8,8 @@ export const db = {
             author: 'author1',
             canBeDownloaded: false,
             minAgeRestriction: null,
-            createdAt: new Date(),
-            publicationDate: new Date(),
+            createdAt: new Date().toISOString(),
+            publicationDate: new Date().toISOString(),
             availableResolutions: [ AvailableResolutions.P144 ],
         },
         {
@@ -18,8 +18,8 @@ export const db = {
             author: 'author2',
             canBeDownloaded: false,
             minAgeRestriction: null,
-            createdAt: new Date(),
-            publicationDate: new Date(),
+            createdAt: new Date().toISOString(),
+            publicationDate: new Date().toISOString(),
             availableResolutions: [ AvailableResolutions.P1440, AvailableResolutions.P240 ],
         },
         {
@@ -28,8 +28,8 @@ export const db = {
             author: 'author3',
             canBeDownloaded: false,
             minAgeRestriction: null,
-            createdAt: new Date(),
-            publicationDate: new Date(),
+            createdAt: new Date().toISOString(),
+            publicationDate: new Date().toISOString(),
             availableResolutions: [ AvailableResolutions.P480 ],
         },
     ]
