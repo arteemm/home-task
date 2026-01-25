@@ -1,9 +1,8 @@
-import express from "express";
 import { setupApp } from "./setup-app";
+import express from "express";
  
 // создание приложения
-export const app = express();
-setupApp(app);
+export const app: express.Application = setupApp();
  
 // порт приложения
 const PORT = process.env.PORT || 5001;

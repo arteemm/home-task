@@ -7,7 +7,7 @@ import { checkPutBody } from '../videos/middlewares/putValidationMiddleware';
 import { checkId } from '../videos/middlewares/checkIdMiddleware';
 import { errorsHandler } from '../videos/middlewares/errorsHandlerMiddleware';
 
-export const videosRouter = Router({});
+export const videosRouter: Router = Router({});
 
 videosRouter.get("/", (
     req: Request,
