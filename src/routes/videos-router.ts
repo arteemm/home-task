@@ -1,4 +1,4 @@
-import { Router, Request, Response } from 'express';
+import express, { Router, Request, Response } from 'express';
 import { db } from '../db/in-memory.db';
 import { Video, CreateVideo, ChangeVideo } from '../videos/types/video';
 import { HttpResponceCodes } from '../core/types/responseCodes';
@@ -7,7 +7,7 @@ import { checkPutBody } from '../videos/middlewares/putValidationMiddleware';
 import { checkId } from '../videos/middlewares/checkIdMiddleware';
 import { errorsHandler } from '../videos/middlewares/errorsHandlerMiddleware';
 
-export const videosRouter: Router = Router({});
+export const videosRouter: express.Router = Router({});
 
 videosRouter.get( "/", ( req: Request, res: Response<Video[] | null> ) => res.status(HttpResponceCodes.OK_200).send(db.videos) );
 
