@@ -9,13 +9,7 @@ import { errorsHandler } from '../videos/middlewares/errorsHandlerMiddleware';
 
 export const videosRouter: Router = Router({});
 
-videosRouter.get("/", (
-    req: Request,
-    res: Response<Video[] | null>,
-) => {
-
-    res.status(200).send(db.videos);
-});
+videosRouter.get( "/", ( req: Request, res: Response<Video[] | null> ) => res.status(HttpResponceCodes.OK_200).send(db.videos) );
 
 videosRouter.get("/:id", 
     checkId, (
