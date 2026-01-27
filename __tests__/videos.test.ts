@@ -1,5 +1,6 @@
 import request from 'supertest';
-import { app } from '../src/index';
+import express from 'express';
+import { setupApp } from '../src/setup-app';
 import { HttpResponceCodes } from '../src/core/types/responseCodes'; 
 import { AvailableResolutions, Video, CreateVideo, ChangeVideo } from '../src/videos/types/video';
 import { API_ERRORS } from '../src/core/constants/apiErrors'
@@ -28,6 +29,9 @@ const videoObjUpdate: ChangeVideo = {
 let id: number = 1;
  
 describe('/videos', () => {
+    const app = express();
+    setupApp(app);
+
     beforeAll(async () => {
         await request(app).delete('/testing/all-data');
     });

@@ -4,7 +4,7 @@ import { HttpResponceCodes } from '../core/types/responseCodes';
 
 export const testingRouter = Router({});
 
-testingRouter.delete('/all-data', (
+testingRouter.delete('/', (
     req: Request<{}, {}, {}, {}>,
     res: Response,
   ) => {
