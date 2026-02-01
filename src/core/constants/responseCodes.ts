@@ -4,5 +4,6 @@ export enum HttpResponceCodes {
     'ACCEPTED_202' = 202,
     'NO_CONTENT_204' = 204,
     'BAD_REQUEST_400' = 400,
+    'NOT_AUTHORIZED_401' = 401,
     'NOT_FOUND_404' = 404,
 };
