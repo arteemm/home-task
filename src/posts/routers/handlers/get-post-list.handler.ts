@@ -1,8 +1,9 @@
 import { Request, Response } from 'express';
-import { db } from '../../../db/in-memory.db';
 import { HttpResponceCodes } from '../../../core/constants/responseCodes';
+import { postsRepository } from '../../repositories/post.repository';
 
 
 export function getPostListHandler(req: Request, res: Response) {
-    res.status(HttpResponceCodes.OK_200).send(db.posts)
+    const posts = postsRepository.findAll();
+    res.status(HttpResponceCodes.OK_200).send(posts)
 };

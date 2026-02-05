@@ -1,8 +1,10 @@
 import { Request, Response } from 'express';
-import { db } from '../../../db/in-memory.db';
 import { HttpResponceCodes } from '../../../core/constants/responseCodes';
+import { blogsRepository } from '../../repositories/blogs.repository';
 
 
 export function getBlogListHandler(req: Request, res: Response) {
-    res.status(HttpResponceCodes.OK_200).send(db.blogs)
+    const blogs = blogsRepository.findAll();
+
+    res.status(HttpResponceCodes.OK_200).send(blogs)
 };
