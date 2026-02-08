@@ -2,8 +2,9 @@ import express, { Express } from "express";
 import { blogsRouter } from './blogs/routers/blog-router';
 import { postsRouter } from './posts/routers/post-router';
 import { testingRouter } from './testing/routes/testing-router';
-import { POSTS_PATH, BLOGS_PATH, TESTING_PATH } from './core/constants/paths'
+import { POSTS_PATH, BLOGS_PATH, TESTING_PATH } from './core/constants/paths';
  
+
 export const setupApp = (app: Express) => {
 
   app.use(express.json()); // middleware для парсинга JSON в теле запроса

@@ -1,36 +1,60 @@
 import { Post, CreatePost, ChangePost } from '../types/posts';
-import { db } from '../../db/in-memory.db';
+import { postsCollection } from '../../repositories/db';
+import { WithId, ObjectId } from 'mongodb';
+import { API_ERRORS } from '../../core/constants/apiErrors';
+import { blogsRepository } from '../../blogs/repositories/blogs.repository';
 
 
 export const postsRepository = {
-    findAll(): Post[] {
-        return db.posts;
+    async findAll(): Promise<WithId<Post>[]> {
+        return postsCollection.find().toArray();
     },
-    findById(id: string): Post | null{
-        return db.posts.find((k: Post) => k.id === id) ?? null;
+
+    async findById(id: string):  Promise<WithId<Post> | null>{
+        if (!ObjectId.isValid(id)) {
+            return new Promise((res, rej) => {
+                res(null)
+            });
+        }
+
+        return postsCollection.findOne({_id: new ObjectId(id)});
     },
-    create(postParam: CreatePost): Post {
-        const blogName = db.blogs.find(blog => blog.id === postParam.blogId)?.name || 'unknow';
+
+    async create(postParam: CreatePost):  Promise<WithId<Post>> {
+        const blog = await blogsRepository.findById(postParam.blogId);
+        const blogName = `${blog?.name}`;
 
         const newPost: Post = {
-        id : `${+new Date()}`,
-        title: postParam.title,
-        shortDescription: postParam.shortDescription,
-        content: postParam.content,
-        blogId: postParam.blogId,
-        blogName,
+            title: postParam.title,
+            shortDescription: postParam.shortDescription,
+            content: postParam.content,
+            blogId: postParam.blogId,
+            blogName: blogName,
         };
 
-        db.posts.push(newPost);   
+        const insertResalt = await postsCollection.insertOne(newPost); 
         
-        return newPost;
+        return {...newPost, _id: insertResalt.insertedId};
     },
-    update(id: string, postParam: ChangePost): void {
-        const indexInDb = db.posts.findIndex((k: Post) => k.id === id);  
-        db.posts[indexInDb] = { ...db.posts[indexInDb], ...postParam};
+
+    async update(id: string, postParam: ChangePost): Promise<void> {
+        const matchesResalt = await postsCollection.updateOne({_id: new ObjectId(id)}, {$set: {
+            title: postParam.title,
+            shortDescription: postParam.shortDescription,
+            content: postParam.content,
+            blogId: postParam.blogId,
+        }});
+
+        if (matchesResalt.matchedCount < 1) {
+            throw new Error(API_ERRORS.id_not_exist);
+        }
     },
-    delete(id: string): void {
-        const indexInDb = db.posts.findIndex((k: Post) => k.id === id);
-        db.posts.splice(indexInDb, 1);
+
+    async delete(id: string): Promise<void> {
+        const deletedBlog = await postsCollection.deleteOne({_id: new ObjectId(id)})
+
+        if (deletedBlog.deletedCount < 1) {
+            throw new Error(API_ERRORS.id_not_exist);
+        }
     }
 };

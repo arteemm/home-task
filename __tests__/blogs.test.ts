@@ -2,8 +2,8 @@ import request from 'supertest';
 import express from 'express';
 import { setupApp } from '../src/setup-app';
 import { HttpResponceCodes } from '../src/core/constants/responseCodes'; 
-import { Blog, CreateBlog, ChangeBlog } from '../src/blogs/types/blogs';
-import { API_ERRORS } from './constants/apiErrors';
+import { CreateBlog, ChangeBlog, BlogViewModel } from '../src/blogs/types/blogs';
+import { API_ERRORS } from '../src/core/constants/apiErrors';
 import { BLOGS_PATH, TESTING_PATH } from '../src/core/constants/paths';
 
 
@@ -82,7 +82,7 @@ describe(BLOGS_PATH, () => {
             .send(blogObjCreate1)
             .expect(HttpResponceCodes.CREATED_201);
 
-        const createdEntity: Blog = createResponce.body;
+        const createdEntity: BlogViewModel = createResponce.body;
         id = createdEntity.id;
         
         expect(createdEntity).toEqual({

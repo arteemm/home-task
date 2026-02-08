@@ -1,31 +1,52 @@
 import { Blog, CreateBlog, ChangeBlog } from '../types/blogs';
-import { db } from '../../db/in-memory.db';
+import { blogCollection } from '../../repositories/db';
+import { WithId, ObjectId } from 'mongodb';
+import { API_ERRORS } from '../../core/constants/apiErrors';
 
 
 export const blogsRepository = {
-    findAll(): Blog[] {
-        return db.blogs;
+    async findAll(): Promise<WithId<Blog>[]> {
+        return blogCollection.find().toArray();
     },
-    findById(id: string): Blog | null{
-        return db.blogs.find((k: Blog) => k.id === id) ?? null;
+
+    async findById(id: string): Promise<WithId<Blog> | null>{
+        if (!ObjectId.isValid(id)) {
+            return new Promise((res, rej) => {
+                res(null)
+            });
+        }
+
+        return blogCollection.findOne({_id: new ObjectId(id)});
     },
-    create(blogParam: CreateBlog): Blog {
-        const newBlog: Blog = {
-            id : `${+new Date()}`,
+
+    async create(blogParam: CreateBlog): Promise<WithId<Blog>> {
+        const newBlog: CreateBlog = {
             name: blogParam.name,
             description: blogParam.description,
             websiteUrl: blogParam.websiteUrl,
-            }
+        };
 
-        db.blogs.push(newBlog);    
-        return newBlog;
+        const insertResalt = await blogCollection.insertOne(newBlog);
+        return {...newBlog, _id: insertResalt.insertedId};
     },
-    update(id: string, blogParam: ChangeBlog): void {
-        const indexInDb = db.blogs.findIndex((k: Blog) => k.id === id);  
-        db.blogs[indexInDb] = { ...db.blogs[indexInDb], ...blogParam};
+
+    async update(id: string, blogParam: ChangeBlog): Promise<void> {
+        const matchesResalt = await blogCollection.updateOne({_id: new ObjectId(id)}, {$set: {
+            name: blogParam.name,
+            description: blogParam.description,
+            websiteUrl: blogParam.websiteUrl,
+        }});
+
+        if (matchesResalt.matchedCount < 1) {
+            throw new Error(API_ERRORS.id_not_exist);
+        }
     },
-    delete(id: string): void {
-        const indexInDb = db.blogs.findIndex((k: Blog) => k.id === id);
-        db.blogs.splice(indexInDb, 1);
+
+    async delete(id: string): Promise<void> {
+        const deletedBlog = await blogCollection.deleteOne({_id: new ObjectId(id)})
+
+        if (deletedBlog.deletedCount < 1) {
+            throw new Error(API_ERRORS.id_not_exist);
+        }
     }
 };

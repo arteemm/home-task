@@ -4,7 +4,7 @@ import { Post } from '../posts/types/posts';
 export const db = {
     blogs: <Blog[]>[
         {
-            id: '1',
+            // id: '1',
             name: 'blog1',
             description: 'description1',
             websiteUrl: 'website1',

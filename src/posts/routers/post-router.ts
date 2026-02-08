@@ -1,5 +1,4 @@
 import express, { Router } from 'express';
-import { checkId } from '../middlewares/checkIdMiddleware';
 import { getPostListHandler } from './handlers/get-post-list.handler';
 import { getPostByIdHandler } from './handlers/get-post.handler';
 import { createPostsHandler } from './handlers/create-post.handler';
@@ -15,7 +14,6 @@ export const postsRouter: express.Router = Router({});
 postsRouter.get( "/", getPostListHandler );
 
 postsRouter.get( "/:id",
-  checkId,
   getPostByIdHandler
 );
 
@@ -27,14 +25,12 @@ postsRouter.post( "/",
  
 postsRouter.put("/:id",
   checkAuthorizationMiddlewares,
-  checkId,
   updatePostValidation,
   updatePostHandler
 );
 
 postsRouter.delete("/:id",
   checkAuthorizationMiddlewares,
-  checkId, 
   deletePostHandler
 );
 

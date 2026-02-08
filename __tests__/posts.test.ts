@@ -2,12 +2,12 @@ import request from 'supertest';
 import express from 'express';
 import { setupApp } from '../src/setup-app';
 import { HttpResponceCodes } from '../src/core/constants/responseCodes'; 
-import { Post, CreatePost, ChangePost } from '../src/posts/types/posts';
-import { Blog} from '../src/blogs/types/blogs';
-import { API_ERRORS } from './constants/apiErrors';
+import { Post, CreatePost, ChangePost, PostViewModel } from '../src/posts/types/posts';
+import { Blog, BlogViewModel } from '../src/blogs/types/blogs';
+import { API_ERRORS } from '../src/core/constants/apiErrors';
 import { POSTS_PATH, TESTING_PATH, BLOGS_PATH } from '../src/core/constants/paths';
 
-const blog: Blog = { id: '1', name: 'test1', description: 'lol1', websiteUrl: 'https://google1mail.ru'}
+const blog: BlogViewModel = { id: '1', name: 'test1', description: 'lol1', websiteUrl: 'https://google1mail.ru'}
 
 const postObjCreate1: CreatePost = {
     title: 'test1',
@@ -88,8 +88,9 @@ describe(POSTS_PATH, () => {
             .send({ name: blog.name, description: blog.description, websiteUrl: blog.websiteUrl })
             .expect(HttpResponceCodes.CREATED_201);
 
-        postObjCreate1.blogId = newBlog.body.id;
-        blog.id = newBlog.body.id;
+        const createdBlog: BlogViewModel = newBlog.body;
+        blog.id = createdBlog.id;
+        postObjCreate1.blogId = createdBlog.id;
 
         const createResponce = await request(app)
             .post(POSTS_PATH)
@@ -97,7 +98,7 @@ describe(POSTS_PATH, () => {
             .send(postObjCreate1)
             .expect(HttpResponceCodes.CREATED_201);
 
-        const createdEntity: Post = createResponce.body;
+        const createdEntity: PostViewModel = createResponce.body;
         id = createdEntity.id;
         
         expect(createdEntity).toEqual({
