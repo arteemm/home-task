@@ -1,14 +1,16 @@
 import { Router, Request, Response } from 'express';
-import { db } from '../../db/in-memory.db';
+import { blogCollection, postsCollection } from '../../repositories/db';
 import { HttpResponceCodes } from '../../core/constants/responseCodes';
 
 export const testingRouter = Router({});
 
-testingRouter.delete('/', (
+testingRouter.delete('/', async (
     req: Request<{}, {}, {}, {}>,
     res: Response,
   ) => {
-    db.blogs.length = 0;
-    db.posts.length = 0;
+    await Promise.all([
+      blogCollection.deleteMany(),
+      postsCollection.deleteMany()
+    ])
     res.sendStatus(HttpResponceCodes.NO_CONTENT_204);
   });
