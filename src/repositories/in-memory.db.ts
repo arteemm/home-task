@@ -27,7 +27,7 @@ export const db = {
     ],
     posts: <Post[]> [
         {
-            id: 'post1',
+            // id: 'post1',
             title: 'title1',
             shortDescription: 'shortDescription1',
             content: 'content1',

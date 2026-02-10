@@ -3,6 +3,7 @@ export type ErrorMessage = {
     field: string;
 };
 
+
 export type ErrorsMessages = {
     errorsMessages: ErrorMessage[]
 };
@@ -28,47 +29,28 @@ const getNotCorrectMessage = (message: string, field: string): ErrorMessage => {
     });
 };
 
-export type ApiErrorsType = {
-    name: {
+type PropsName = 'name' | 'description' | 'title' | 'shortDescription' | 'content';
+
+interface SimpleErrorObj  {
         NOT_A_STRING : ErrorMessage;
         NOT_FIND: ErrorMessage;
         IS_TOO_LONG: ErrorMessage;
-    },
-    description: {
-        NOT_A_STRING : ErrorMessage;
-        NOT_FIND: ErrorMessage;
-        IS_TOO_LONG: ErrorMessage;
-    },
-    websiteUrl: {
-        NOT_A_STRING : ErrorMessage;
-        NOT_FIND: ErrorMessage;
-        IS_TOO_LONG: ErrorMessage;
-        NOT_CORRECT: ErrorMessage;
-    },
-    title : {
-        NOT_A_STRING : ErrorMessage;
-        NOT_FIND: ErrorMessage;
-        IS_TOO_LONG: ErrorMessage;
-    },
-    shortDescription : {
-        NOT_A_STRING : ErrorMessage;
-        NOT_FIND: ErrorMessage;
-        IS_TOO_LONG: ErrorMessage;
-    },
-    content : {
-        NOT_A_STRING : ErrorMessage;
-        NOT_FIND: ErrorMessage;
-        IS_TOO_LONG: ErrorMessage;
-    },
-    blogId: {
-        NOT_A_STRING : ErrorMessage;
-        NOT_FIND: ErrorMessage;
-        NOT_FIND_BLOG_ID: ErrorMessage;
-    },
-    id_not_exist : string;
 };
 
-export const API_ERRORS: ApiErrorsType = {
+type SimpleErrorsType = Record<PropsName, SimpleErrorObj>
+
+type OtherErrorsType = {
+    websiteUrl: SimpleErrorObj & { NOT_CORRECT: ErrorMessage },
+    blogId: Omit<SimpleErrorObj, 'IS_TOO_LONG'> & { NOT_FIND_BLOG_ID: ErrorMessage },
+    id_not_exist : string;
+    createdAt: Omit<SimpleErrorObj, 'IS_TOO_LONG'> & { NOT_DATE: ErrorMessage },
+    isMembership: Pick<SimpleErrorObj, 'NOT_FIND'> & { NOT_A_BOOLEAN: ErrorMessage },
+};
+
+export type  ApiErrorsType = SimpleErrorsType & OtherErrorsType;
+
+
+export const API_ERRORS:  ApiErrorsType = {
     name: {
         NOT_A_STRING: getNotStringMessage('name'),
         NOT_FIND: getNotFindMessage('name'),
@@ -108,5 +90,14 @@ export const API_ERRORS: ApiErrorsType = {
             field: 'blogId'
         },
     },
-    id_not_exist : 'entity is not exist'
+    id_not_exist : 'entity is not exist',
+    createdAt: {
+        NOT_A_STRING: getNotStringMessage('createdAt'),
+        NOT_FIND: getNotFindMessage('createdAt'),
+        NOT_DATE: getNotCorrectMessage('createdAt is not a date', 'createdAt')
+    },
+    isMembership: {
+        NOT_FIND: getNotFindMessage('isMembership'),
+        NOT_A_BOOLEAN: getNotCorrectMessage('isMembership is not a boolean', 'isMembership')
+    }
 };

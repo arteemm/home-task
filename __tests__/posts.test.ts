@@ -7,7 +7,7 @@ import { Blog, BlogViewModel } from '../src/blogs/types/blogs';
 import { API_ERRORS } from '../src/core/constants/apiErrors';
 import { POSTS_PATH, TESTING_PATH, BLOGS_PATH } from '../src/core/constants/paths';
 
-const blog: BlogViewModel = { id: '1', name: 'test1', description: 'lol1', websiteUrl: 'https://google1mail.ru'}
+const blog: BlogViewModel = { id: '1', name: 'test1', description: 'lol1', websiteUrl: 'https://google1mail.ru', createdAt: '8', isMembership: false}
 
 const postObjCreate1: CreatePost = {
     title: 'test1',
@@ -33,9 +33,9 @@ const postObjCreate3: CreatePost = {
 const postObjUpdate: ChangePost = {title: 'updated1', shortDescription: 'updated1', content: 'https://updated1.ru', blogId: blog.id};
 
 
-let id: string = '1';
-let id2: string = '1';
-let id3: string = '1';
+let crearedPost1: PostViewModel = {  ...postObjCreate1, id: '2', createdAt: '4', blogName: 'false' };
+let crearedPost2: PostViewModel = {  ...postObjCreate2, id: '1', createdAt: '2', blogName: 'false' };
+let crearedPost3: PostViewModel = {  ...postObjCreate3, id: '3', createdAt: '5', blogName: 'false' };
  
 describe(POSTS_PATH, () => {
     const app = express();
@@ -98,25 +98,21 @@ describe(POSTS_PATH, () => {
             .send(postObjCreate1)
             .expect(HttpResponceCodes.CREATED_201);
 
-        const createdEntity: PostViewModel = createResponce.body;
-        id = createdEntity.id;
+        crearedPost1 = structuredClone(createResponce.body)
         
-        expect(createdEntity).toEqual({
+        expect(crearedPost1).toEqual({
             id: expect.any(String),
-            title: createdEntity.title,
-            shortDescription: createdEntity.shortDescription,
-            content: createdEntity.content,
-            blogId: createdEntity.blogId,
+            title: postObjCreate1.title,
+            shortDescription: postObjCreate1.shortDescription,
+            content: postObjCreate1.content,
+            blogId: postObjCreate1.blogId,
             blogName: newBlog.body.name,
+            createdAt: expect.any(String),
         });
 
         await request(app)
             .get(POSTS_PATH)
-            .expect(HttpResponceCodes.OK_200, [{
-                id,
-                ...postObjCreate1,
-                blogName: blog.name,
-        }]);
+            .expect(HttpResponceCodes.OK_200, [{ ...crearedPost1 }]);
     });
 
     it('shouldn\'t authorization with incorrect login or password, 401', async () => {
@@ -127,21 +123,17 @@ describe(POSTS_PATH, () => {
             .expect(HttpResponceCodes.NOT_AUTHORIZED_401);
 
         await request(app)
-            .put(POSTS_PATH + `/${id}`)
+            .put(POSTS_PATH + `/${crearedPost1.id}`)
             .send(postObjCreate1)
             .expect(HttpResponceCodes.NOT_AUTHORIZED_401);
 
         await request(app)
-            .delete(POSTS_PATH + `/${id}`)
+            .delete(POSTS_PATH + `/${crearedPost1.id}`)
             .expect(HttpResponceCodes.NOT_AUTHORIZED_401);
         
         await request(app)
-            .get(POSTS_PATH + `/${id}`)
-            .expect(HttpResponceCodes.OK_200, {
-                id,
-                ...postObjCreate1,
-                blogName: blog.name,
-        });
+            .get(POSTS_PATH + `/${crearedPost1.id}`)
+            .expect(HttpResponceCodes.OK_200, { ...crearedPost1 });
     });
 
     it('should return not found with incorrect id, 404', async () => {
@@ -163,11 +155,7 @@ describe(POSTS_PATH, () => {
 
         await request(app)
             .get(POSTS_PATH)
-            .expect(HttpResponceCodes.OK_200, [{
-                id,
-                ...postObjCreate1,
-                blogName: blog.name,
-        }]);
+            .expect(HttpResponceCodes.OK_200, [{ ...crearedPost1 }]);
     });
     
     it('should create entity with correct input data, 201', async () => {
@@ -180,7 +168,7 @@ describe(POSTS_PATH, () => {
             .send(postObjCreate2)
             .expect(HttpResponceCodes.CREATED_201);
 
-        id2 = createResponce2.body.id;
+        crearedPost2 = structuredClone(createResponce2.body);
 
         const createResponce3 = await request(app)
             .post(POSTS_PATH)
@@ -188,20 +176,16 @@ describe(POSTS_PATH, () => {
             .send(postObjCreate3)
             .expect(HttpResponceCodes.CREATED_201);
             
-        id3 = createResponce3.body.id;
+        crearedPost3 = structuredClone(createResponce3.body);
 
         await request(app)
             .get(POSTS_PATH)
-            .expect(HttpResponceCodes.OK_200, [ 
-                { id, ...postObjCreate1, blogName: blog.name,  },
-                { id: id2, ...postObjCreate2,  blogName: blog.name },
-                { id: id3, ...postObjCreate3,  blogName: blog.name }
-            ]);
+            .expect(HttpResponceCodes.OK_200, [ { ...crearedPost1  }, { ...crearedPost2 }, { ...crearedPost3 } ]);
     });
 
     it('shouldn\'t update entity with incorrect input data, 400', async () => {
         await request(app)
-            .put(POSTS_PATH + `/${id}`)
+            .put(POSTS_PATH + `/${crearedPost1.id}`)
             .auth('admin', 'qwerty')
             .send({ title: 5, shortDescription: 4, content: 6, blogId: 1 })
             .expect(HttpResponceCodes.BAD_REQUEST_400, {
@@ -209,7 +193,7 @@ describe(POSTS_PATH, () => {
         });
 
         await request(app)
-            .put(POSTS_PATH + `/${id}`)
+            .put(POSTS_PATH + `/${crearedPost1.id}`)
             .auth('admin', 'qwerty')
             .send({ title: '', shortDescription: '', content: '', blogId: '' })
             .expect(HttpResponceCodes.BAD_REQUEST_400, {
@@ -217,7 +201,7 @@ describe(POSTS_PATH, () => {
         });
 
         await request(app)
-            .put(POSTS_PATH + `/${id}`)
+            .put(POSTS_PATH + `/${crearedPost1.id}`)
             .auth('admin', 'qwerty')
             .send({ title: 'yturiehfjdnxhddfyturiehfjdnxhddfyturiehfjdnxhddf', shortDescription: '6', blogId: '1' })
             .expect(HttpResponceCodes.BAD_REQUEST_400, {
@@ -226,18 +210,14 @@ describe(POSTS_PATH, () => {
 
         await request(app)
             .get(POSTS_PATH)
-            .expect(HttpResponceCodes.OK_200, [ 
-                { id, ...postObjCreate1, blogName: blog.name,  },
-                { id: id2, ...postObjCreate2,  blogName: blog.name },
-                { id: id3, ...postObjCreate3,  blogName: blog.name }
-            ]);
+            .expect(HttpResponceCodes.OK_200, [ { ...crearedPost1  }, { ...crearedPost2 }, { ...crearedPost3 } ]);
     });
 
     it('should update entity with correct input data, 201', async () => {
         postObjUpdate.blogId = blog.id;
 
         await request(app)
-            .put(POSTS_PATH + `/${id}`)
+            .put(POSTS_PATH + `/${crearedPost1.id}`)
             .auth('admin', 'qwerty')
             .send(postObjUpdate)
             .expect(HttpResponceCodes.NO_CONTENT_204);
@@ -245,24 +225,17 @@ describe(POSTS_PATH, () => {
 
         await request(app)
         .get(POSTS_PATH)
-            .expect(HttpResponceCodes.OK_200, [ 
-                { id, ...postObjUpdate, blogName: blog.name,  },
-                { id: id2, ...postObjCreate2,  blogName: blog.name },
-                { id: id3, ...postObjCreate3,  blogName: blog.name }
-        ]);
+        .expect(HttpResponceCodes.OK_200, [ { ...crearedPost1, ...postObjUpdate },{ ...crearedPost2 }, { ...crearedPost3 } ]);
     });
 
     it('should delete entity with correct  id, 201', async () => {
         await request(app)
-            .delete(POSTS_PATH + `/${id2}`)
+            .delete(POSTS_PATH + `/${crearedPost2.id}`)
             .auth('admin', 'qwerty')
             .expect(HttpResponceCodes.NO_CONTENT_204);
         
         await request(app)
         .get(POSTS_PATH)
-            .expect(HttpResponceCodes.OK_200, [ 
-                { id, ...postObjUpdate, blogName: blog.name,  },
-                { id: id3, ...postObjCreate3,  blogName: blog.name }
-        ]);
+        .expect(HttpResponceCodes.OK_200, [ { ...crearedPost1, ...postObjUpdate }, { ...crearedPost3 } ]);
     });
 });

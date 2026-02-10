@@ -1,16 +1,14 @@
-export type Blog = {
-    name: string;
-    description: string;
-    websiteUrl: string;
-};
-
 export type BlogViewModel = {
     id: string;
     name: string;
     description: string;
     websiteUrl: string;
+    createdAt: string;
+    isMembership: boolean;
 };
 
-export type CreateBlog = Omit<Blog, 'id'>;
+export type Blog = Omit<BlogViewModel, 'id'>;
 
-export type ChangeBlog = Omit<Blog, 'id'>;
+export type CreateBlog = Pick<Blog, 'name' | 'description' | 'websiteUrl'>;
+
+export type ChangeBlog = Pick<Blog, 'name' | 'description' | 'websiteUrl'>;

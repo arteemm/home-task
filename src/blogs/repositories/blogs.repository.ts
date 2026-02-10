@@ -20,10 +20,12 @@ export const blogsRepository = {
     },
 
     async create(blogParam: CreateBlog): Promise<WithId<Blog>> {
-        const newBlog: CreateBlog = {
+        const newBlog: Blog = {
             name: blogParam.name,
             description: blogParam.description,
             websiteUrl: blogParam.websiteUrl,
+            createdAt: new Date().toISOString(),
+            isMembership: false,
         };
 
         const insertResalt = await blogCollection.insertOne(newBlog);

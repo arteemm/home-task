@@ -30,6 +30,7 @@ export const postsRepository = {
             content: postParam.content,
             blogId: postParam.blogId,
             blogName: blogName,
+            createdAt: new Date().toISOString(),
         };
 
         const insertResalt = await postsCollection.insertOne(newPost); 

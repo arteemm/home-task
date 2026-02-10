@@ -26,10 +26,10 @@ const blogObjCreate3: CreateBlog = {
 };
 const blogObjUpdate: ChangeBlog = {name: 'updated1', description: 'updated1', websiteUrl: 'https://updated1.ru'};
 
+let crearedBlog1: BlogViewModel = {  ...blogObjCreate1, id: '1', createdAt: '2', isMembership: false };
+let crearedBlog2: BlogViewModel = {  ...blogObjCreate2, id: '2', createdAt: '4', isMembership: false };
+let crearedBlog3: BlogViewModel = {  ...blogObjCreate3, id: '3', createdAt: '5', isMembership: false };
 
-let id: string = '1';
-let id2: string = '1';
-let id3: string = '1';
  
 describe(BLOGS_PATH, () => {
     const app = express();
@@ -82,22 +82,20 @@ describe(BLOGS_PATH, () => {
             .send(blogObjCreate1)
             .expect(HttpResponceCodes.CREATED_201);
 
-        const createdEntity: BlogViewModel = createResponce.body;
-        id = createdEntity.id;
+        crearedBlog1 = structuredClone(createResponce.body)
         
-        expect(createdEntity).toEqual({
+        expect(crearedBlog1).toEqual({
             id: expect.any(String),
-            name: createdEntity.name,
-            description: createdEntity.description,
-            websiteUrl: createdEntity.websiteUrl,
+            name: blogObjCreate1.name,
+            description: blogObjCreate1.description,
+            websiteUrl: blogObjCreate1.websiteUrl,
+            createdAt: expect.any(String),
+            isMembership: false,
         });
 
         await request(app)
             .get(BLOGS_PATH)
-            .expect(HttpResponceCodes.OK_200, [{
-                id,
-                ...blogObjCreate1
-        }]);
+            .expect(HttpResponceCodes.OK_200, [{ ...crearedBlog1 }]);
     });
 
     it('shouldn\'t authorization with incorrect login or password, 401', async () => {
@@ -108,20 +106,17 @@ describe(BLOGS_PATH, () => {
             .expect(HttpResponceCodes.NOT_AUTHORIZED_401);
 
         await request(app)
-            .put(BLOGS_PATH + `/${id}`)
+            .put(BLOGS_PATH + `/${crearedBlog1.id}`)
             .send(blogObjCreate1)
             .expect(HttpResponceCodes.NOT_AUTHORIZED_401);
 
         await request(app)
-            .delete(BLOGS_PATH + `/${id}`)
+            .delete(BLOGS_PATH + `/${crearedBlog1.id}`)
             .expect(HttpResponceCodes.NOT_AUTHORIZED_401);
         
         await request(app)
-            .get(BLOGS_PATH + `/${id}`)
-            .expect(HttpResponceCodes.OK_200, {
-                id,
-                ...blogObjCreate1
-        });
+            .get(BLOGS_PATH + `/${crearedBlog1.id}`)
+            .expect(HttpResponceCodes.OK_200, { ...crearedBlog1 });
     });
 
     it('should return not found with incorrect id, 404', async () => {
@@ -143,10 +138,7 @@ describe(BLOGS_PATH, () => {
 
         await request(app)
             .get(BLOGS_PATH)
-            .expect(HttpResponceCodes.OK_200, [{
-                id,
-                ...blogObjCreate1
-        }]);
+            .expect(HttpResponceCodes.OK_200, [{ ...crearedBlog1 }]);
     });
     
     it('should create entity with correct input data, 201', async () => {
@@ -156,7 +148,7 @@ describe(BLOGS_PATH, () => {
             .send(blogObjCreate2)
             .expect(HttpResponceCodes.CREATED_201);
 
-        id2 = createResponce2.body.id;
+        crearedBlog2 = structuredClone(createResponce2.body);
 
         const createResponce3 = await request(app)
             .post(BLOGS_PATH)
@@ -164,17 +156,17 @@ describe(BLOGS_PATH, () => {
             .send(blogObjCreate3)
             .expect(HttpResponceCodes.CREATED_201);
             
-        id3 = createResponce3.body.id;
+        crearedBlog3 = structuredClone(createResponce3.body);
 
 
         await request(app)
             .get(BLOGS_PATH)
-            .expect(HttpResponceCodes.OK_200, [ { id, ...blogObjCreate1 }, { id: id2, ...blogObjCreate2 }, { id: id3, ...blogObjCreate3 } ]);
+            .expect(HttpResponceCodes.OK_200, [ { ...crearedBlog1 }, { ...crearedBlog2 }, { ...crearedBlog3 } ]);
     });
 
     it('shouldn\'t update entity with incorrect input data, 400', async () => {
         await request(app)
-            .put(BLOGS_PATH + `/${id}`)
+            .put(BLOGS_PATH + `/${crearedBlog1.id}`)
             .auth('admin', 'qwerty')
             .send({ name: 5, description: 4, websiteUrl: 6 })
             .expect(HttpResponceCodes.BAD_REQUEST_400, {
@@ -182,7 +174,7 @@ describe(BLOGS_PATH, () => {
         });
 
         await request(app)
-            .put(BLOGS_PATH + `/${id}`)
+            .put(BLOGS_PATH + `/${crearedBlog1.id}`)
             .auth('admin', 'qwerty')
             .send({ name: '', description: '', websiteUrl: '' })
             .expect(HttpResponceCodes.BAD_REQUEST_400, {
@@ -190,7 +182,7 @@ describe(BLOGS_PATH, () => {
         });
 
         await request(app)
-            .put(BLOGS_PATH + `/${id}`)
+            .put(BLOGS_PATH + `/${crearedBlog1.id}`)
             .auth('admin', 'qwerty')
             .send({ name: 'yturiehfjdnxhddf', description: '6', websiteUrl: 'www.dad@' })
             .expect(HttpResponceCodes.BAD_REQUEST_400, {
@@ -199,29 +191,29 @@ describe(BLOGS_PATH, () => {
 
         await request(app)
             .get(BLOGS_PATH)
-            .expect(HttpResponceCodes.OK_200, [ { id, ...blogObjCreate1 }, { id: id2, ...blogObjCreate2 }, { id: id3, ...blogObjCreate3 } ]);
+            .expect(HttpResponceCodes.OK_200, [ { ...crearedBlog1 }, { ...crearedBlog2 }, { ...crearedBlog3 } ]);
     });
 
     it('should update entity with correct input data, 201', async () => {
         await request(app)
-            .put(BLOGS_PATH + `/${id}`)
+            .put(BLOGS_PATH + `/${crearedBlog1.id}`)
             .auth('admin', 'qwerty')
             .send(blogObjUpdate)
             .expect(HttpResponceCodes.NO_CONTENT_204);
         
         await request(app)
             .get(BLOGS_PATH)
-            .expect(HttpResponceCodes.OK_200, [ { id, ...blogObjUpdate }, { id: id2, ...blogObjCreate2 }, { id: id3, ...blogObjCreate3 } ]);
+            .expect(HttpResponceCodes.OK_200, [ { ...crearedBlog1, ...blogObjUpdate }, { ...crearedBlog2 }, { ...crearedBlog3 } ]);
     });
 
     it('should delete entity with correct  id, 201', async () => {
         await request(app)
-            .delete(BLOGS_PATH + `/${id2}`)
+            .delete(BLOGS_PATH + `/${crearedBlog2.id}`)
             .auth('admin', 'qwerty')
             .expect(HttpResponceCodes.NO_CONTENT_204);
         
         await request(app)
             .get(BLOGS_PATH)
-            .expect(HttpResponceCodes.OK_200, [ { id, ...blogObjUpdate }, { id: id3, ...blogObjCreate3 } ]);
+            .expect(HttpResponceCodes.OK_200, [ { ...crearedBlog1, ...blogObjUpdate }, { ...crearedBlog3 } ]);
     });
 });

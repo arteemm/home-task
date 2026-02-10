@@ -12,6 +12,7 @@ export function mapToPostListViewModel(postList: WithId<Post>[]): PostViewModel[
                 content: post.content,
                 blogId: post.blogId,
                 blogName: post.blogName,
+                createdAt: post.createdAt,
             });
         })
     );
