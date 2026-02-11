@@ -20,22 +20,10 @@ export const postsRepository = {
         return postsCollection.findOne({_id: new ObjectId(id)});
     },
 
-    async create(postParam: CreatePost):  Promise<WithId<Post>> {
-        const blog = await blogsRepository.findById(postParam.blogId);
-        const blogName = `${blog?.name}`;
-
-        const newPost: Post = {
-            title: postParam.title,
-            shortDescription: postParam.shortDescription,
-            content: postParam.content,
-            blogId: postParam.blogId,
-            blogName: blogName,
-            createdAt: new Date().toISOString(),
-        };
-
-        const insertResalt = await postsCollection.insertOne(newPost); 
+    async create(newEntity: Post):  Promise<{_id: ObjectId}> {
+        const insertResalt = await postsCollection.insertOne(newEntity); 
         
-        return {...newPost, _id: insertResalt.insertedId};
+        return {_id: insertResalt.insertedId};
     },
 
     async update(id: string, postParam: ChangePost): Promise<void> {

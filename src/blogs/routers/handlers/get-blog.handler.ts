@@ -1,13 +1,13 @@
 import { Request, Response } from 'express';
 import { HttpResponceCodes } from '../../../core/constants/responseCodes';
-import { blogsRepository } from '../../repositories/blogs.repository';
+import { blogsService } from '../../domain/blogs-service';
 import { mapToBlogViewModel } from '../mappers/map-to-blog-view-model.utils';
 
 
 export async function getBlogByIdHandler(req: Request, res: Response) {
     try {
         const id = req.params.id.toString();
-        const blogById = await blogsRepository.findById(id);
+        const blogById = await blogsService.findById(id);
 
         if (blogById === null) {
             res.sendStatus(HttpResponceCodes.NOT_FOUND_404);

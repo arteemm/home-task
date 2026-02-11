@@ -19,17 +19,10 @@ export const blogsRepository = {
         return blogCollection.findOne({_id: new ObjectId(id)});
     },
 
-    async create(blogParam: CreateBlog): Promise<WithId<Blog>> {
-        const newBlog: Blog = {
-            name: blogParam.name,
-            description: blogParam.description,
-            websiteUrl: blogParam.websiteUrl,
-            createdAt: new Date().toISOString(),
-            isMembership: false,
-        };
+    async create(newEntity: Blog): Promise<{_id: ObjectId}> {
+        const insertResalt = await blogCollection.insertOne(newEntity);
 
-        const insertResalt = await blogCollection.insertOne(newBlog);
-        return {...newBlog, _id: insertResalt.insertedId};
+        return { _id: insertResalt.insertedId };
     },
 
     async update(id: string, blogParam: ChangeBlog): Promise<void> {
