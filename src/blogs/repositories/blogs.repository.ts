@@ -1,12 +1,31 @@
-import { Blog, CreateBlog, ChangeBlog } from '../types/blogs';
+import { Blog, ChangeBlog, BlogQueryInput } from '../types/blogs';
 import { blogCollection } from '../../repositories/db';
 import { WithId, ObjectId } from 'mongodb';
 import { API_ERRORS } from '../../core/constants/apiErrors';
 
 
 export const blogsRepository = {
-    async findAll(): Promise<WithId<Blog>[]> {
-        return blogCollection.find().toArray();
+    async findAll(queryDto: BlogQueryInput): Promise<{ items: WithId<Blog>[]; totalCount: number }> {
+        const {
+            searchNameTerm,
+            pageNumber,
+            pageSize,
+            sortBy,
+            sortDirection,
+        } = queryDto;
+
+        const skip = (+pageNumber - 1) * +pageSize;
+        const filter = searchNameTerm ? { name: {$regex : `${searchNameTerm}`, $options: 'i'}} : {};
+
+        const items = await blogCollection
+            .find(filter)
+            .sort({ [sortBy]: sortDirection })
+            .skip(skip)
+            .limit(+pageSize)
+            .toArray(); 
+
+        const totalCount = await blogCollection.countDocuments(filter);
+        return {items, totalCount};
     },
 
     async findById(id: string): Promise<WithId<Blog> | null>{
@@ -19,17 +38,10 @@ export const blogsRepository = {
         return blogCollection.findOne({_id: new ObjectId(id)});
     },
 
-    async create(blogParam: CreateBlog): Promise<WithId<Blog>> {
-        const newBlog: Blog = {
-            name: blogParam.name,
-            description: blogParam.description,
-            websiteUrl: blogParam.websiteUrl,
-            createdAt: new Date().toISOString(),
-            isMembership: false,
-        };
+    async create(newEntity: Blog): Promise<{_id: ObjectId}> {
+        const insertResalt = await blogCollection.insertOne(newEntity);
 
-        const insertResalt = await blogCollection.insertOne(newBlog);
-        return {...newBlog, _id: insertResalt.insertedId};
+        return { _id: insertResalt.insertedId };
     },
 
     async update(id: string, blogParam: ChangeBlog): Promise<void> {

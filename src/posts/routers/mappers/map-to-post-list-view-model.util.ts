@@ -1,10 +1,14 @@
 import { WithId } from 'mongodb';
-import { Post, PostViewModel } from '../../types/posts';
+import { Post, PostListViewModel } from '../../types/posts';
 
 
-export function mapToPostListViewModel(postList: WithId<Post>[]): PostViewModel[] {
-    return (
-        postList.map((post: WithId<Post>) => {
+export function mapToPostListViewModel(meta: { pagesCount: number; page: number; pageSize: number; totalCount: number; }, items: WithId<Post>[] ): PostListViewModel {
+    return ({
+        pagesCount: meta.pagesCount,
+        page: meta.page,
+        pageSize: meta.pageSize,
+        totalCount: meta.totalCount,
+        items: items.map((post: WithId<Post>) => {
             return ({
                 id: post._id.toString(),
                 title: post.title,
@@ -15,5 +19,5 @@ export function mapToPostListViewModel(postList: WithId<Post>[]): PostViewModel[
                 createdAt: post.createdAt,
             });
         })
-    );
+    });
 };
