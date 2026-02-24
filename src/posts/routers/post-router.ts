@@ -4,14 +4,17 @@ import { getPostByIdHandler } from './handlers/get-post.handler';
 import { createPostsHandler } from './handlers/create-post.handler';
 import { updatePostHandler } from './handlers/update-post.handler';
 import { deletePostHandler } from './handlers/delete-post.handler';
-import { createPostsValidation } from './validation/create-post-validation';
-import { updatePostValidation } from './validation/update-post-validation';
+import { createPostValidation, updatePostValidation } from './body.input-dto.validation-middleware';
 import { checkAuthorizationMiddlewares } from '../../auth/middlewares/check-authorization-middleware';
+import { paginationAndSortingValidation } from '../../core/middlewares/query-pagination-sorting.validation-middleware';
+import { PostSortField } from './input/post-sort-field';
 
 
 export const postsRouter: express.Router = Router({});
 
-postsRouter.get( "/", getPostListHandler );
+postsRouter.get( "/",
+  paginationAndSortingValidation(PostSortField),
+  getPostListHandler );
 
 postsRouter.get( "/:id",
   getPostByIdHandler
@@ -19,7 +22,7 @@ postsRouter.get( "/:id",
 
 postsRouter.post( "/",
   checkAuthorizationMiddlewares,
-  createPostsValidation,
+  createPostValidation,
   createPostsHandler
 );
  

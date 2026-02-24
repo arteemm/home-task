@@ -37,7 +37,7 @@ interface SimpleErrorObj  {
         IS_TOO_LONG: ErrorMessage;
 };
 
-type SimpleErrorsType = Record<PropsName, SimpleErrorObj>
+type SimpleErrorsType = Record<PropsName, SimpleErrorObj>;
 
 type OtherErrorsType = {
     websiteUrl: SimpleErrorObj & { NOT_CORRECT: ErrorMessage },

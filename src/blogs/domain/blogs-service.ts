@@ -1,13 +1,13 @@
-import { Blog, CreateBlog, ChangeBlog } from '../types/blogs';
-import { blogCollection } from '../../repositories/db';
-import { WithId, ObjectId } from 'mongodb';
-import { API_ERRORS } from '../../core/constants/apiErrors';
+import { Blog, CreateBlog, ChangeBlog, BlogQueryInput } from '../types/blogs';
+import { WithId } from 'mongodb';
 import { blogsRepository } from '../repositories/blogs.repository';
 
 
 export const blogsService = {
-    async findAll(): Promise<WithId<Blog>[]> {
-        return blogsRepository.findAll();
+    async findAll(
+        queryDto: BlogQueryInput
+    ): Promise<{ items: WithId<Blog>[]; totalCount: number }> {
+        return blogsRepository.findAll(queryDto);
     },
 
     async findById(id: string): Promise<WithId<Blog> | null>{

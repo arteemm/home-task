@@ -1,14 +1,15 @@
-import { Post, CreatePost, ChangePost } from '../types/posts';
-import { postsCollection } from '../../repositories/db';
+import { Post, CreatePost, ChangePost, PostQueryInput } from '../types/posts';
 import { WithId, ObjectId } from 'mongodb';
-import { API_ERRORS } from '../../core/constants/apiErrors';
 import { blogsRepository } from '../../blogs/repositories/blogs.repository';
 import { postsRepository } from '../repositories/post.repository';
 
 
 export const postsService = {
-    async findAll(): Promise<WithId<Post>[]> {
-        return  postsRepository.findAll();
+    async findAll(
+        queryDto: PostQueryInput,
+        blogId?: string,
+    ): Promise<{ items: WithId<Post>[]; totalCount: number }> {
+        return postsRepository.findAll(queryDto, blogId);
     },
 
     async findById(id: string):  Promise<WithId<Post> | null>{

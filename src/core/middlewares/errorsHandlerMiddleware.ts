@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction  } from 'express';
-import { ErrorMessage } from '../core/types/errorsMessagesTypes';
-import { HttpResponceCodes } from '../core/constants/responseCodes';
+import { ErrorMessage } from '../../core/types/errorsMessagesTypes';
+import { HttpResponceCodes } from '../../core/constants/responseCodes';
 import { validationResult } from 'express-validator';
 
 

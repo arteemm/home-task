@@ -1,4 +1,4 @@
-import { Post, CreatePost, ChangePost } from '../types/posts';
+import { Post, CreatePost, ChangePost, PostQueryInput } from '../types/posts';
 import { postsCollection } from '../../repositories/db';
 import { WithId, ObjectId } from 'mongodb';
 import { API_ERRORS } from '../../core/constants/apiErrors';
@@ -6,8 +6,26 @@ import { blogsRepository } from '../../blogs/repositories/blogs.repository';
 
 
 export const postsRepository = {
-    async findAll(): Promise<WithId<Post>[]> {
-        return postsCollection.find().toArray();
+    async findAll(queryDto: PostQueryInput, blogId?: string): Promise<{ items: WithId<Post>[]; totalCount: number }> {
+        const {
+            pageNumber,
+            pageSize,
+            sortBy,
+            sortDirection,
+        } = queryDto;
+
+        const skip = (+pageNumber - 1) * +pageSize;
+        const filter = blogId ? { blogId: blogId } : {};
+
+        const items = await postsCollection
+            .find(filter)
+            .sort({ [sortBy]: sortDirection })
+            .skip(skip)
+            .limit(+pageSize)
+            .toArray(); 
+
+        const totalCount = await postsCollection.countDocuments(filter);
+        return {items, totalCount};
     },
 
     async findById(id: string):  Promise<WithId<Post> | null>{
