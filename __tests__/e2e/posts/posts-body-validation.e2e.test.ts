@@ -4,7 +4,7 @@ import { setupApp } from '../../../src/setup-app';
 import { HttpResponceCodes } from '../../../src/core/constants/responseCodes';
 import { PostViewModel } from '../../../src/posts/types/posts';
 import { API_ERRORS } from '../../../src/core/constants/apiErrors';
-import { BLOGS_PATH, TESTING_PATH, POSTS_PATH } from '../../../src/core/constants/paths';
+import { TESTING_PATH, POSTS_PATH } from '../../../src/core/constants/paths';
 import { createBlog } from '../../utils/blogs/create-blog';
 import { getBlogDto } from '../../utils/blogs/get-blog-dto';
 import { getPostDto } from '../../utils/posts/get-post-dto';

@@ -1,5 +1,5 @@
 import { Post, CreatePost, ChangePost, PostQueryInput } from '../types/posts';
-import { WithId, ObjectId } from 'mongodb';
+import { WithId } from 'mongodb';
 import { blogsRepository } from '../../blogs/repositories/blogs.repository';
 import { postsRepository } from '../repositories/post.repository';
 

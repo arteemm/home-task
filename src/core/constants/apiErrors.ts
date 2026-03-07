@@ -10,26 +10,34 @@ export type ErrorsMessages = {
 
 const getNotFindMessage = (field: string): ErrorMessage => {
     return ({
-            message: `${field} not exist`,
-            field: field
+        message: `${field} not exist`,
+        field: field
     });
 };
 
 const getNotStringMessage = (field: string): ErrorMessage => {
     return ({
-            message: `${field} not exist`,
-            field: field
+        message: `${field} not a string`,
+        field: field
     });
 };
 
 const getNotCorrectMessage = (message: string, field: string): ErrorMessage => {
     return ({
-            message: message,
-            field: field
+        message: message,
+        field: field
     });
 };
 
-type PropsName = 'name' | 'description' | 'title' | 'shortDescription' | 'content';
+enum PropsName {
+    name = 'name',
+    description = 'description',
+    title = 'title',
+    shortDescription = 'shortDescription',
+    content = 'content',
+    loginOrEmail = 'loginOrEmail',
+    password = 'password',
+};
 
 interface SimpleErrorObj  {
         NOT_A_STRING : ErrorMessage;
@@ -45,6 +53,8 @@ type OtherErrorsType = {
     id_not_exist : string;
     createdAt: Omit<SimpleErrorObj, 'IS_TOO_LONG'> & { NOT_DATE: ErrorMessage },
     isMembership: Pick<SimpleErrorObj, 'NOT_FIND'> & { NOT_A_BOOLEAN: ErrorMessage },
+    login: SimpleErrorObj & { NOT_CORRECT: ErrorMessage, MUST_BE_UNIQUE: ErrorMessage },
+    email: Omit<SimpleErrorObj, 'IS_TOO_LONG'> & { NOT_CORRECT: ErrorMessage, MUST_BE_UNIQUE: ErrorMessage },
 };
 
 export type  ApiErrorsType = SimpleErrorsType & OtherErrorsType;
@@ -99,5 +109,60 @@ export const API_ERRORS:  ApiErrorsType = {
     isMembership: {
         NOT_FIND: getNotFindMessage('isMembership'),
         NOT_A_BOOLEAN: getNotCorrectMessage('isMembership is not a boolean', 'isMembership')
+    },
+    loginOrEmail: {
+        NOT_A_STRING: getNotStringMessage('loginOrEmail'),
+        NOT_FIND: getNotFindMessage('loginOrEmail'),
+        IS_TOO_LONG: getNotCorrectMessage('length more than 1000 symbols', 'loginOrEmail'),
+    },
+    password: {
+        NOT_A_STRING: getNotStringMessage('password'),
+        NOT_FIND: getNotFindMessage('password'),
+        IS_TOO_LONG: getNotCorrectMessage('length must be more than 6 and less than 20 symbols', 'password'),
+    },
+    login: {
+        NOT_A_STRING: getNotStringMessage('login'),
+        NOT_FIND: getNotFindMessage('login'),
+        IS_TOO_LONG: getNotCorrectMessage('length must be more than 3 and less than 10 symbols', 'login'),
+        NOT_CORRECT: getNotCorrectMessage('login does not match the pattern ', 'login'),
+        MUST_BE_UNIQUE: getNotCorrectMessage('login must be Unique ', 'login'),
+    },
+    email: {
+        NOT_A_STRING: getNotStringMessage('email'),
+        NOT_FIND: getNotFindMessage('email'),
+        NOT_CORRECT: getNotCorrectMessage('email does not match the pattern ', 'email'),
+        MUST_BE_UNIQUE: getNotCorrectMessage('email must be Unique ', 'email'),
     }
 };
+
+
+enum PaginatonAndSorting {
+    searchNameTerm = 'searchNameTerm',
+    searchLoginTerm = 'searchLoginTerm',
+    searchEmailTerm = 'searchEmailTerm',
+    pageNumber = 'pageNumber',
+    pageSize = 'pageSize',
+    sortBy = 'sortBy',
+    sortDirection = 'sortDirection',
+};
+
+// export type PaginationAndSortingErrors = Record<PaginatonAndSorting, { MESSAGE : ErrorMessage }>;
+
+// const paginationAndSortigErrors: PaginationAndSortingErrors = {
+//     searchNameTerm: {
+//         MESSAGE: getNotStringMessage('searchNameTerm')
+//     },
+//     searchLoginTerm: {
+//         MESSAGE: getNotStringMessage('searchLoginTerm')
+//     },
+//     searchEmailTerm: {
+//         MESSAGE: getNotStringMessage('searchEmailTerm')
+//     },
+//     pageNumber: {
+//         MESSAGE: getNotCorrectMessage('pageNumber', 'Page number must be a positive integer')
+//     },
+//     pageSize: {
+//         MESSAGE: getNotCorrectMessage('pageSize', 'Page size must be between 1 and 100')
+//     },
+    
+// }

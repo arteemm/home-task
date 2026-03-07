@@ -5,6 +5,8 @@ import { errorsHandler } from './errorsHandlerMiddleware';
 
 
 const DEFAULT_SEARCH_NAME_TERM = null;
+const DEFAULT_SEARCH_LOGIN_TERM = null;
+const DEFAULT_SEARCH_EMAIL_TERM = null;
 const DEFAULT_PAGE_NUMBER = '1';
 const DEFAULT_PAGE_SIZE = '10';
 const DEFAULT_SORT_DIRECTION = SortDirection.Desc;
@@ -12,6 +14,8 @@ const DEFAULT_SORT_BY = 'createdAt';
 
 export const paginationAndSortingDefault: PaginationAndSorting<string> = {
     searchNameTerm: DEFAULT_SEARCH_NAME_TERM,
+    searchLoginTerm: DEFAULT_SEARCH_LOGIN_TERM,
+    searchEmailTerm: DEFAULT_SEARCH_EMAIL_TERM,
     pageNumber: DEFAULT_PAGE_NUMBER,
     pageSize: DEFAULT_PAGE_SIZE,
     sortBy: DEFAULT_SORT_BY,
@@ -29,6 +33,18 @@ export function paginationAndSortingValidation<T extends string>(
       .isString()
       .optional({ nullable: true })
       .withMessage('SearchNameTerm must be a string'),
+  
+    query('searchLoginTerm')
+      .default(DEFAULT_SEARCH_LOGIN_TERM)
+      .isString()
+      .optional({ nullable: true })
+      .withMessage('searchLoginTerm must be a string'),
+  
+    query('searchEmailTerm')
+      .default(DEFAULT_SEARCH_EMAIL_TERM)
+      .isString()
+      .optional({ nullable: true })
+      .withMessage('searchEmailTerm must be a string'),
 
     query('pageNumber')
       .default(DEFAULT_PAGE_NUMBER)
