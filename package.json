@@ -14,7 +14,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@types/bcrypt": "^6.0.0",
     "@types/mongodb": "^4.0.7",
+    "bcrypt": "^6.0.0",
     "express": "^5.2.1",
     "express-validator": "^7.3.1",
     "mongodb": "^7.1.0"

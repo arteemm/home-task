@@ -1,8 +1,7 @@
-import { Post, CreatePost, ChangePost, PostQueryInput } from '../types/posts';
+import { Post, ChangePost, PostQueryInput } from '../types/posts';
 import { postsCollection } from '../../repositories/db';
 import { WithId, ObjectId } from 'mongodb';
 import { API_ERRORS } from '../../core/constants/apiErrors';
-import { blogsRepository } from '../../blogs/repositories/blogs.repository';
 
 
 export const postsRepository = {

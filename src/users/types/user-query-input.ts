@@ -1,12 +1,10 @@
-import { SortDirection } from './sort-direction';
+import { SortDirection } from '../../core/types/sort-direction';
 
-export type PaginationAndSorting<T> = {
-    searchNameTerm: string | null;
+export type UserQueryInput = {
     searchLoginTerm: string | null;
     searchEmailTerm: string | null;
     pageNumber: string;
     pageSize: string;
-    sortBy: T;
+    sortBy: string;
     sortDirection: SortDirection;
 };
-

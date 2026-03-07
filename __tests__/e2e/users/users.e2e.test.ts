@@ -1,0 +1,69 @@
+import request from 'supertest';
+import express from 'express';
+import { setupApp } from '../../../src/setup-app';
+import { HttpResponceCodes } from '../../../src/core/constants/responseCodes'; 
+import { UserViewModel } from '../../../src/users/types/user-view-model';
+import { USER_PATH, TESTING_PATH, AUTH_PATH } from '../../../src/core/constants/paths';
+import { getUserDto } from '../../utils/users/get-user-dto';
+import { createUser } from '../../utils/users/create-user';
+
+ 
+describe(USER_PATH, () => {
+    const app = express();
+    setupApp(app);
+
+    let testEntity: UserViewModel = {} as UserViewModel;
+
+    beforeAll(async () => {
+        await request(app).delete(TESTING_PATH);
+    });
+
+    it('should return 200 and empty array', async () => {
+        await request(app)
+        .get(USER_PATH)
+        .auth('admin', 'qwerty')
+        .expect(HttpResponceCodes.OK_200, { pagesCount: 0, page: 1, pageSize: 10, totalCount: 0, items: [] })
+    });
+
+    it('should create user with correct input data, 201', async () => {
+        const createResponce = await createUser(app, getUserDto(), HttpResponceCodes.CREATED_201);
+        testEntity = structuredClone(createResponce);
+
+        await request(app)
+            .get(USER_PATH)
+            .auth('admin', 'qwerty')
+            .expect(HttpResponceCodes.OK_200, { pagesCount: 1, page: 1, pageSize: 10, totalCount: 1, items: [{ ...createResponce }] });
+    });
+
+    it('should delete entity with correct  id, 204', async () => {
+        const createResponce = await createUser(app, getUserDto({login: 'uniLogin1', email: 'UniqueEmail1@mail.ru'}), HttpResponceCodes.CREATED_201);
+
+        await request(app)
+            .delete(USER_PATH + `/${createResponce.id}`)
+            .auth('admin', 'qwerty')
+            .expect(HttpResponceCodes.NO_CONTENT_204);
+
+        await request(app)
+            .get(USER_PATH)
+            .auth('admin', 'qwerty')
+            .expect(HttpResponceCodes.OK_200, { pagesCount: 1, page: 1, pageSize: 10, totalCount: 1, items: [{ ...testEntity }] });
+    });
+
+    it('should login entity with correct login and password, 204', async () => {
+        const user = getUserDto({login: 'uniLogin2', email: 'UniqueEmail2@mail.ru'});
+
+        await request(app)
+            .post(AUTH_PATH + '/login')
+            .send({loginOrEmail: testEntity.login, password: user.password})
+            .expect(HttpResponceCodes.NO_CONTENT_204);
+           
+        await request(app)
+            .post(AUTH_PATH + '/login')
+            .send({loginOrEmail: testEntity.email, password: user.password})
+            .expect(HttpResponceCodes.NO_CONTENT_204);
+    });
+
+    afterAll((done) => {
+        done();  
+    })
+});
