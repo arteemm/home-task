@@ -1,21 +1,16 @@
-import { Blog, CreateBlog, ChangeBlog, BlogQueryInput } from '../types/blogs';
-import { WithId } from 'mongodb';
+import { UpdateBlogDto } from '../types/update-blog-dto';
+import { CreateBlogDto } from '../types/create-blog-dto';
+import { BlogDBType } from '../types/blogDBtype';
 import { blogsRepository } from '../repositories/blogs.repository';
 
 
 export const blogsService = {
-    async findAll(
-        queryDto: BlogQueryInput
-    ): Promise<{ items: WithId<Blog>[]; totalCount: number }> {
-        return blogsRepository.findAll(queryDto);
-    },
-
-    async findById(id: string): Promise<WithId<Blog> | null>{
+    async findById(id: string): Promise<BlogDBType | null>{
         return blogsRepository.findById(id);
     },
 
-    async create(blogParam: CreateBlog): Promise<WithId<Blog>> {
-        const newBlog: Blog = {
+    async create(blogParam: CreateBlogDto): Promise<string> {
+        const newBlog: BlogDBType = {
             name: blogParam.name,
             description: blogParam.description,
             websiteUrl: blogParam.websiteUrl,
@@ -23,11 +18,10 @@ export const blogsService = {
             isMembership: false,
         };
 
-        const insertResalt = await blogsRepository.create(newBlog);
-        return {...newBlog, _id: insertResalt._id};
+        return blogsRepository.create(newBlog);
     },
 
-    async update(id: string, blogParam: ChangeBlog): Promise<void> {
+    async update(id: string, blogParam: UpdateBlogDto): Promise<void> {
         return blogsRepository.update(id, blogParam);
     },
 

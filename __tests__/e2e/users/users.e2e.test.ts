@@ -13,6 +13,7 @@ describe(USER_PATH, () => {
     setupApp(app);
 
     let testEntity: UserViewModel = {} as UserViewModel;
+    let accessToken: string;
 
     beforeAll(async () => {
         await request(app).delete(TESTING_PATH);
@@ -55,12 +56,22 @@ describe(USER_PATH, () => {
         await request(app)
             .post(AUTH_PATH + '/login')
             .send({loginOrEmail: testEntity.login, password: user.password})
-            .expect(HttpResponceCodes.NO_CONTENT_204);
+            .expect(HttpResponceCodes.OK_200);
            
-        await request(app)
+        const responce = await request(app)
             .post(AUTH_PATH + '/login')
             .send({loginOrEmail: testEntity.email, password: user.password})
-            .expect(HttpResponceCodes.NO_CONTENT_204);
+            .expect(HttpResponceCodes.OK_200);
+
+        accessToken = responce.body.accessToken;
+    });
+
+    
+    it('should return 200 and user logined params', async () => {
+        await request(app)
+        .get(AUTH_PATH + '/me')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .expect(HttpResponceCodes.OK_200, { email: testEntity.email, login: testEntity.login, userId: testEntity.id })
     });
 
     afterAll((done) => {

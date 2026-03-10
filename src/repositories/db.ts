@@ -1,8 +1,9 @@
 import { MongoClient, Db, Collection } from 'mongodb';
 import dotenv from 'dotenv';
-import { Blog } from '../blogs/types/blogs';
-import { Post } from '../posts/types/posts';
+import { BlogDBType } from '../blogs/types/blogDBtype';
+import { PostDBType } from '../posts/types/postDBtype';
 import { UserDBtype } from '../users/types/userDBtype';
+import { CommentsDBType } from '../comments/types/commentsDBtype';
 
 
 dotenv.config();
@@ -12,10 +13,10 @@ dotenv.config();
 
 const client = new MongoClient(mongoURI);
 const db:Db = client.db('home-task');
-export const blogCollection: Collection<Blog> = db.collection<Blog>('blogs');
-export const postsCollection: Collection<Post> = db.collection<Post>('posts');
+export const blogCollection: Collection<BlogDBType> = db.collection<BlogDBType>('blogs');
+export const postsCollection: Collection<PostDBType> = db.collection<PostDBType>('posts');
 export const usersCollection: Collection<UserDBtype> = db.collection<UserDBtype>('users');
-
+export const commentsCollection: Collection<CommentsDBType> = db.collection<CommentsDBType>('comments');
 
 export async function runDb () {
     try {

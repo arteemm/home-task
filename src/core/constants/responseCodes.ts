@@ -5,6 +5,7 @@ export enum HttpResponceCodes {
     'NO_CONTENT_204' = 204,
     'BAD_REQUEST_400' = 400,
     'NOT_AUTHORIZED_401' = 401,
+    'FORBIDDEN_403' = 403,
     'NOT_FOUND_404' = 404,
     'InternalServerError' = 500,
 };

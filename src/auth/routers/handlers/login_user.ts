@@ -7,15 +7,16 @@ import { HttpResponceCodes } from '../../../core/constants/responseCodes';
 export async function loginUser(req: Request<{}, {}, LoginUserDto, {}>, res: Response) {
     try {
         const { loginOrEmail, password } = req.body;
-        const isLoginUser = await authService.checkUserCredentials(loginOrEmail, password);
-        
-        if (!isLoginUser) {
+        const accessToken = await authService.loginUser(loginOrEmail, password);
+
+        return res.status(HttpResponceCodes.OK_200).send({accessToken: accessToken});
+    } catch(e: unknown) {
+        const err = e as { message: string };
+
+        if (err?.message === 'Unauthorized') {
             return res.sendStatus(HttpResponceCodes.NOT_AUTHORIZED_401);
         }
 
-        return res.sendStatus(HttpResponceCodes.NO_CONTENT_204);
-    } catch(e: unknown) {
-        console.log(e);
         throw new Error('some error in loginUser');
     }
 };

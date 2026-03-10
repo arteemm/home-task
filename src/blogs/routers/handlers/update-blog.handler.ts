@@ -1,19 +1,12 @@
 import { Request, Response } from 'express';
 import { HttpResponceCodes } from '../../../core/constants/responseCodes';
 import { blogsService } from '../../domain/blogs-service';
-import { WithId } from 'mongodb';
-import { Blog } from '../../types/blogs';
+import { UpdateBlogDto } from '../../types/update-blog-dto';
 
 
-export async function updateBlogHandler(req: Request, res: Response) {
+export async function updateBlogHandler(req: Request<{id: string}, {}, UpdateBlogDto>, res: Response) {
     try {
         const id = req.params.id.toString();
-        const blog: WithId<Blog> | null = await blogsService.findById(id);
-
-        if (!blog) {
-            res.sendStatus(HttpResponceCodes.NOT_FOUND_404);
-            return;
-        }
 
         await blogsService.update(id, req.body);
         res.sendStatus(HttpResponceCodes.NO_CONTENT_204);
