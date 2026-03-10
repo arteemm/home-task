@@ -1,33 +1,12 @@
-import { Post, ChangePost, PostQueryInput } from '../types/posts';
+import { PostDBType } from '../types/postDBtype';
+import { UpdatePostDto } from '../types/update-post-dto';
 import { postsCollection } from '../../repositories/db';
-import { WithId, ObjectId } from 'mongodb';
+import { ObjectId } from 'mongodb';
 import { API_ERRORS } from '../../core/constants/apiErrors';
 
 
 export const postsRepository = {
-    async findAll(queryDto: PostQueryInput, blogId?: string): Promise<{ items: WithId<Post>[]; totalCount: number }> {
-        const {
-            pageNumber,
-            pageSize,
-            sortBy,
-            sortDirection,
-        } = queryDto;
-
-        const skip = (+pageNumber - 1) * +pageSize;
-        const filter = blogId ? { blogId: blogId } : {};
-
-        const items = await postsCollection
-            .find(filter)
-            .sort({ [sortBy]: sortDirection })
-            .skip(skip)
-            .limit(+pageSize)
-            .toArray(); 
-
-        const totalCount = await postsCollection.countDocuments(filter);
-        return {items, totalCount};
-    },
-
-    async findById(id: string):  Promise<WithId<Post> | null>{
+    async findById(id: string):  Promise<PostDBType | null>{
         if (!ObjectId.isValid(id)) {
             return new Promise((res, rej) => {
                 res(null)
@@ -37,13 +16,13 @@ export const postsRepository = {
         return postsCollection.findOne({_id: new ObjectId(id)});
     },
 
-    async create(newEntity: Post):  Promise<{_id: ObjectId}> {
+    async create(newEntity: PostDBType):  Promise<string> {
         const insertResalt = await postsCollection.insertOne(newEntity); 
         
-        return {_id: insertResalt.insertedId};
+        return insertResalt.insertedId.toString();
     },
 
-    async update(id: string, postParam: ChangePost): Promise<void> {
+    async update(id: string, postParam: UpdatePostDto): Promise<void> {
         const matchesResalt = await postsCollection.updateOne({_id: new ObjectId(id)}, {$set: {
             title: postParam.title,
             shortDescription: postParam.shortDescription,

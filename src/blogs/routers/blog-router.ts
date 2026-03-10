@@ -12,6 +12,7 @@ import { checkAuthorizationMiddlewares } from '../../auth/middlewares/check-auth
 import { paginationAndSortingValidation } from '../../core/middlewares/query-pagination-sorting.validation-middleware';
 import { BlogSortField } from './input/blog-sort-field';
 import { PostSortField } from '../../posts/routers/input/post-sort-field';
+import { checkExistBlogByIdMiddleware } from './middlewares/check-exist-blog-by-Id.middleware';
 
 
 export const blogsRouter: express.Router = Router({});
@@ -22,11 +23,13 @@ blogsRouter.get( "/",
 );
 
 blogsRouter.get( "/:id",
+  checkExistBlogByIdMiddleware,
   getBlogByIdHandler
 );
 
 blogsRouter.get( "/:id/posts",
   paginationAndSortingValidation(PostSortField),
+  checkExistBlogByIdMiddleware,
   getPostsListInBlogHandler
 );
 
@@ -39,16 +42,19 @@ blogsRouter.post( "/",
 blogsRouter.post( "/:id/posts",
   checkAuthorizationMiddlewares,
   createPostInBlogValidation,
+  checkExistBlogByIdMiddleware,
   createPostInBlogHandler
 );
 
 blogsRouter.put("/:id",
   checkAuthorizationMiddlewares,
   updateBlogValidation,
+  checkExistBlogByIdMiddleware,
   updateBlogHandler
 );
 
 blogsRouter.delete("/:id",
   checkAuthorizationMiddlewares,
+  checkExistBlogByIdMiddleware,
   deleteBlogHandler
 );

@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { blogCollection, postsCollection, usersCollection } from '../../repositories/db';
+import { blogCollection, postsCollection, usersCollection, commentsCollection } from '../../repositories/db';
 import { HttpResponceCodes } from '../../core/constants/responseCodes';
 
 export const testingRouter = Router({});
@@ -12,6 +12,7 @@ testingRouter.delete('/', async (
       blogCollection.deleteMany(),
       postsCollection.deleteMany(),
       usersCollection.deleteMany(),
+      commentsCollection.deleteMany(),
     ])
     res.sendStatus(HttpResponceCodes.NO_CONTENT_204);
   });

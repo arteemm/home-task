@@ -1,6 +1,6 @@
-import { CreatePost } from '../../../src/posts/types/posts';
+import { CreatePostDto } from '../../../src/posts/types/create-post-dto';
 
-export function getPostDto (data?: Partial<CreatePost>): CreatePost {
+export function getPostDto (data?: Partial<CreatePostDto>): CreatePostDto {
     return {
         title: data?.title || 'title',
         shortDescription: data?.shortDescription || 'shortDescription',
@@ -9,7 +9,7 @@ export function getPostDto (data?: Partial<CreatePost>): CreatePost {
     };
 }
 
-export function getPostDtoWithoutBlogId (data?: Partial<CreatePost>): Omit<CreatePost, 'blogId'> {
+export function getPostDtoWithoutBlogId (data?: Partial<CreatePostDto>): Omit<CreatePostDto, 'blogId'> {
     return {
         title: data?.title || 'title',
         shortDescription: data?.shortDescription || 'shortDescription',

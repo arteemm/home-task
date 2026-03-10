@@ -1,7 +1,7 @@
 import request from 'supertest';
 import { Express } from 'express';
 import { POSTS_PATH } from '../../../src/core/constants/paths';
-import { PostViewModel } from '../../../src/posts/types/posts';
+import { PostViewModel } from '../../../src/posts/types/post-view-model';
 import { HttpResponceCodes } from '../../../src/core/constants/responseCodes';
 import { ErrorMessage } from '../../../src/core/types/errorsMessagesTypes';
 

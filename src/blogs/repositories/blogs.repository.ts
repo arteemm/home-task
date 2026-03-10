@@ -1,34 +1,12 @@
-import { Blog, ChangeBlog, BlogQueryInput } from '../types/blogs';
+import { UpdateBlogDto } from '../types/update-blog-dto';
+import { BlogDBType } from '../types/blogDBtype';
 import { blogCollection } from '../../repositories/db';
-import { WithId, ObjectId } from 'mongodb';
 import { API_ERRORS } from '../../core/constants/apiErrors';
+import { ObjectId } from 'mongodb';
 
 
 export const blogsRepository = {
-    async findAll(queryDto: BlogQueryInput): Promise<{ items: WithId<Blog>[]; totalCount: number }> {
-        const {
-            searchNameTerm,
-            pageNumber,
-            pageSize,
-            sortBy,
-            sortDirection,
-        } = queryDto;
-
-        const skip = (+pageNumber - 1) * +pageSize;
-        const filter = searchNameTerm ? { name: {$regex : `${searchNameTerm}`, $options: 'i'}} : {};
-
-        const items = await blogCollection
-            .find(filter)
-            .sort({ [sortBy]: sortDirection })
-            .skip(skip)
-            .limit(+pageSize)
-            .toArray(); 
-
-        const totalCount = await blogCollection.countDocuments(filter);
-        return {items, totalCount};
-    },
-
-    async findById(id: string): Promise<WithId<Blog> | null>{
+    async findById(id: string): Promise<BlogDBType | null>{
         if (!ObjectId.isValid(id)) {
             return new Promise((res, rej) => {
                 res(null)
@@ -38,13 +16,13 @@ export const blogsRepository = {
         return blogCollection.findOne({_id: new ObjectId(id)});
     },
 
-    async create(newEntity: Blog): Promise<{_id: ObjectId}> {
+    async create(newEntity: BlogDBType): Promise<string> {
         const insertResalt = await blogCollection.insertOne(newEntity);
 
-        return { _id: insertResalt.insertedId };
+        return  insertResalt.insertedId.toString();
     },
 
-    async update(id: string, blogParam: ChangeBlog): Promise<void> {
+    async update(id: string, blogParam: UpdateBlogDto): Promise<void> {
         const matchesResalt = await blogCollection.updateOne({_id: new ObjectId(id)}, {$set: {
             name: blogParam.name,
             description: blogParam.description,

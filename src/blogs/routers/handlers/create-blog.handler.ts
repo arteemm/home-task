@@ -1,14 +1,19 @@
 import { Request, Response } from 'express';
 import { HttpResponceCodes } from '../../../core/constants/responseCodes';
-import { Blog } from '../../types/blogs';
 import { blogsService } from '../../domain/blogs-service';
-import { WithId } from 'mongodb';
-import { mapToBlogViewModel } from '../mappers/map-to-blog-view-model.utils';
+import { CreateBlogDto } from '../../types/create-blog-dto';
+import { blogsQueryRepository } from '../../repositories/blogs.query.repositories';
+import { BlogViewModel } from '../../types/blog-view-model';
 
 
-export async function createBlogHandler(req: Request, res: Response) {
-    const newBlog: WithId<Blog> = await blogsService.create(req.body);
-    const blogViewModel = mapToBlogViewModel(newBlog);
+export async function createBlogHandler(req: Request<{}, {}, CreateBlogDto>, res: Response<BlogViewModel>) {
+    try {
+        const result = await blogsService.create(req.body);
+        const blogViewModel = await blogsQueryRepository.findById(result) as BlogViewModel;
 
-    return res.status(HttpResponceCodes.CREATED_201).send(blogViewModel);
+        return res.status(HttpResponceCodes.CREATED_201).send(blogViewModel);
+    } catch(e: unknown) {
+        console.error(e);
+        return;
+    }
 };

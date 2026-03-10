@@ -2,7 +2,7 @@ import request from 'supertest';
 import express from 'express';
 import { setupApp } from '../../../src/setup-app';
 import { HttpResponceCodes } from '../../../src/core/constants/responseCodes';
-import { PostViewModel } from '../../../src/posts/types/posts';
+import { PostViewModel } from '../../../src/posts/types/post-view-model';
 import { API_ERRORS } from '../../../src/core/constants/apiErrors';
 import { TESTING_PATH, POSTS_PATH } from '../../../src/core/constants/paths';
 import { createBlog } from '../../utils/blogs/create-blog';

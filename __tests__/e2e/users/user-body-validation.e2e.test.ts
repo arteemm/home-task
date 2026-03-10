@@ -4,7 +4,7 @@ import { setupApp } from '../../../src/setup-app';
 import { HttpResponceCodes } from '../../../src/core/constants/responseCodes';
 import { CreateUserDto } from '../../../src/users/types/create-user-dto';
 import { API_ERRORS } from '../../../src/core/constants/apiErrors';
-import { TESTING_PATH, USER_PATH } from '../../../src/core/constants/paths';
+import { TESTING_PATH, USER_PATH, AUTH_PATH } from '../../../src/core/constants/paths';
 import { createUser } from '../../utils/users/create-user';
 import { getUserDto } from '../../utils/users/get-user-dto';
 import { UserViewModel } from '../../../src/users/types/user-view-model';
@@ -116,6 +116,11 @@ describe('User API body validation check', () => {
         await request(app)
             .delete(USER_PATH + `/${testEntity.id}`)
             .expect(HttpResponceCodes.NOT_AUTHORIZED_401);
+
+        await request(app)
+        .get(AUTH_PATH + '/me')
+        .set('Authorization', `Bearer ${'asdasda.123123.dsadsa'}`)
+        .expect(HttpResponceCodes.NOT_AUTHORIZED_401)
         
         await request(app)
             .get(USER_PATH)
