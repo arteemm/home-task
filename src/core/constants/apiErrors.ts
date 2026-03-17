@@ -54,7 +54,8 @@ type OtherErrorsType = {
     createdAt: Omit<SimpleErrorObj, 'IS_TOO_LONG'> & { NOT_DATE: ErrorMessage },
     isMembership: Pick<SimpleErrorObj, 'NOT_FIND'> & { NOT_A_BOOLEAN: ErrorMessage },
     login: SimpleErrorObj & { NOT_CORRECT: ErrorMessage, MUST_BE_UNIQUE: ErrorMessage },
-    email: Omit<SimpleErrorObj, 'IS_TOO_LONG'> & { NOT_CORRECT: ErrorMessage, MUST_BE_UNIQUE: ErrorMessage },
+    email: Omit<SimpleErrorObj, 'IS_TOO_LONG'> & { NOT_CORRECT: ErrorMessage, MUST_BE_UNIQUE: ErrorMessage, APPLIED: ErrorMessage },
+    code: Omit<SimpleErrorObj, 'IS_TOO_LONG'> & { EXPIRED: ErrorMessage, APPLIED: ErrorMessage},
 };
 
 export type  ApiErrorsType = SimpleErrorsType & OtherErrorsType;
@@ -132,7 +133,14 @@ export const API_ERRORS:  ApiErrorsType = {
         NOT_FIND: getNotFindMessage('email'),
         NOT_CORRECT: getNotCorrectMessage('email does not match the pattern ', 'email'),
         MUST_BE_UNIQUE: getNotCorrectMessage('email must be Unique ', 'email'),
-    }
+        APPLIED: getNotCorrectMessage('user has already been applied ', 'code'),
+    },
+    code: {
+        NOT_FIND: getNotStringMessage('code'),
+        NOT_A_STRING: getNotStringMessage('code'),
+        EXPIRED: getNotCorrectMessage('code has been expired ', 'code'),
+        APPLIED: getNotCorrectMessage('user has already been applied ', 'code'),
+    }  
 };
 
 

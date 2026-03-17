@@ -1,10 +1,14 @@
-import { UserDBtype } from '../types/userDBtype';
+import { User } from './user.entity';
 import { CreateUserDto } from '../types/create-user-dto';
-import { usersRepository } from '../repositories/user.repository';
+import { UsersRepository } from '../repositories/user.repository';
 import bcrypt from 'bcrypt';
 
 
-export const userService = {
+export class UserService {
+    constructor(
+        protected usersRepository: UsersRepository
+    ) {}
+
     async createUser(dto: CreateUserDto): Promise<string> {
         const passwordSalt = await bcrypt.genSalt(10);
         const passwordHash = await this.generateHash(dto.password, passwordSalt);
@@ -19,28 +23,27 @@ export const userService = {
             throw new Error('email is not unique')
         }
 
-        const newUser: UserDBtype = {
-            userName: dto.login,
-            email: dto.email,
-            passwordHash: passwordHash,
-            passwordSalt: passwordSalt,
-            createdAt: new Date().toISOString(),
-        };
+        const newUser = new User(
+            dto.login,
+            dto.email,
+            passwordHash,
+            passwordSalt,
+        );
 
-        return usersRepository.create(newUser);
-    },
+        return this.usersRepository.create(newUser);
+    }
 
     async deleteUser(id: string) {
-        return usersRepository.delete(id);
-    },
+        return this.usersRepository.delete(id);
+    }
 
     async generateHash(password: string, passwordSalt: string) {
         const hash = await bcrypt.hash(password, passwordSalt);
         return hash;
-    },
+    }
 
    async checkUniqueLoginorEmail(loginOrEmail: string): Promise<boolean> {
-        const checkloginOrEmail = await usersRepository.findByLoginOrEmail(loginOrEmail);
+        const checkloginOrEmail = await this.usersRepository.findByLoginOrEmail(loginOrEmail);
         return !checkloginOrEmail;
-   },
-};
+   }
+}

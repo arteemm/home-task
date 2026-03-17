@@ -1,4 +1,4 @@
-import { UserDBtype } from '../types/userDBtype';
+import { IUserDB } from '../types/userDBInterface';
 import { UserQueryInput } from '../types/user-query-input';
 import { UserViewModel } from '../types/user-view-model';
 import { usersCollection } from '../../repositories/db';
@@ -50,7 +50,7 @@ export const usersQueryRepository = {
         return userDB ? this._mapToUserViewModel(userDB) : null;
     },
 
-    _mapToUserViewModel(data: WithId<UserDBtype>): UserViewModel {
+    _mapToUserViewModel(data: WithId<IUserDB>): UserViewModel {
         return {
             id: data._id.toString(),
             login: data.userName,
@@ -59,8 +59,8 @@ export const usersQueryRepository = {
         }
     },
 
-    _mapToListUsersViewModel(data: WithId<UserDBtype>[]): UserViewModel[] {
-        return data.map((item: WithId<UserDBtype>) => {
+    _mapToListUsersViewModel(data: WithId<IUserDB>[]): UserViewModel[] {
+        return data.map((item: WithId<IUserDB>) => {
             return {
                 id: item._id.toString(),
                 login: item.userName,

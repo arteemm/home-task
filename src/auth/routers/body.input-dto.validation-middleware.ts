@@ -20,10 +20,34 @@ const passwordValidation = body('password')
     .isLength({ min: 1, max: 5000})
     .withMessage(API_ERRORS.password.IS_TOO_LONG.message);
 
+const codeValitadion = body('code')
+    .notEmpty()
+    .withMessage(API_ERRORS.code.NOT_FIND.message)
+    .isString()
+    .withMessage(API_ERRORS.code.NOT_A_STRING.message)
+
+const emailValidation = body('email')
+    .notEmpty()
+    .withMessage(API_ERRORS.email.NOT_FIND.message)
+    .isString()
+    .withMessage(API_ERRORS.email.NOT_A_STRING.message)
+    .matches(/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/)
+    .withMessage(API_ERRORS.login.NOT_CORRECT.message)
+
 
 export const loginUserValidation = [
     loginOrEmailValidation,
     passwordValidation,
+    errorsHandler
+];
+
+export const confirmationCodeValidation = [
+    codeValitadion,
+    errorsHandler
+];
+
+export const resendingEmailValidation = [
+    emailValidation,
     errorsHandler
 ];
 

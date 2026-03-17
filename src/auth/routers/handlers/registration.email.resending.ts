@@ -1,0 +1,25 @@
+import { Request, Response } from 'express';
+import { authService } from '../../../composition-root';
+import { HttpResponceCodes } from '../../../core/constants/responseCodes';
+import { API_ERRORS } from '../../../core/constants/apiErrors';
+
+
+export async function registrationEmailResending(req: Request<{}, {}, {email: string}, {}>, res: Response) {
+    try {
+        const { email } = req.body;
+        const responce = await authService.registrationEmailResending(email);
+
+        return res.sendStatus(HttpResponceCodes.NO_CONTENT_204);
+    } catch(e: unknown) {
+        const err = e as { message: string };
+        if (err?.message === 'user is not exist') {
+           return res.status(HttpResponceCodes.BAD_REQUEST_400).send({errorsMessages: [ API_ERRORS.email.NOT_FIND ]});
+        }
+
+        if (err?.message === 'user has already been applied') {
+           return res.status(HttpResponceCodes.BAD_REQUEST_400).send({errorsMessages: [ API_ERRORS.email.APPLIED ]});
+        }
+
+        throw new Error('some error in create user handler');
+    }
+};

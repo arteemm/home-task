@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { userService } from '../../domain/user-service';
+import { userService } from '../../../composition-root';
 import { usersQueryRepository } from '../../repositories/user.query.repository';
 import { UserViewModel } from '../../types/user-view-model';
 import { HttpResponceCodes } from '../../../core/constants/responseCodes';
