@@ -1,38 +1,40 @@
 import { IUserDB } from '../types/userDBInterface';
-import { usersCollection } from '../../repositories/db';
-import { WithId, ObjectId } from 'mongodb';
+// import { usersCollection } from '../../repositories/db';
+import { WithId, ObjectId, Collection } from 'mongodb';
 import { API_ERRORS } from '../../core/constants/apiErrors';
 
 
 export class UsersRepository {
-   async findById(id: string): Promise<WithId<IUserDB> | null>{
-        if (!ObjectId.isValid(id)) {
-            return new Promise((res, rej) => {
-                res(null)
-            });
+    constructor(private usersCollection: Collection<IUserDB>) {}
+
+    async findById(id: string): Promise<WithId<IUserDB> | null>{
+            if (!ObjectId.isValid(id)) {
+                return new Promise((res, rej) => {
+                    res(null)
+                });
+            }
+
+            return this.usersCollection.findOne({_id: new ObjectId(id)});
         }
 
-        return usersCollection.findOne({_id: new ObjectId(id)});
-    }
-
     async findByLoginOrEmail(loginOrEmail: string): Promise<WithId<IUserDB> | null>{
-        return usersCollection.findOne({
+        return this.usersCollection.findOne({
             $or: [{ userName: loginOrEmail }, { email: loginOrEmail }],
         });
     }
 
     async create(newEntity: IUserDB): Promise<string> {
-        const insertResalt = await usersCollection.insertOne(newEntity);
+        const insertResalt = await this.usersCollection.insertOne(newEntity);
 
         return insertResalt.insertedId.toString();
     }
 
     async findByConfirmationCode (code: string): Promise<WithId<IUserDB> | null>{
-        return usersCollection.findOne({ 'emailConfirmation.condirmationCode': code });
+        return this.usersCollection.findOne({ 'emailConfirmation.condirmationCode': code });
     }
 
     async updateConfirmationStatus(id: string): Promise<void> {
-        const matchesResalt = await usersCollection.updateOne(
+        const matchesResalt = await this.usersCollection.updateOne(
             {_id: new ObjectId(id)},
             {$set: { 'emailConfirmation.isConfirmed': true }}
         );
@@ -43,7 +45,7 @@ export class UsersRepository {
     }
 
     async updateConfirmationCode(id: string, code: string, expirationDate: Date ): Promise<void> {
-        const matchesResalt = await usersCollection.updateOne({_id: new ObjectId(id)}, { $set: {
+        const matchesResalt = await this.usersCollection.updateOne({_id: new ObjectId(id)}, { $set: {
                     'emailConfirmation.condirmationCode': code,
                     'emailConfirmation.expirationDate': expirationDate,
                 }});
@@ -55,7 +57,7 @@ export class UsersRepository {
 
 
     async delete(id: string): Promise<void> {
-        const deletedBlog = await usersCollection.deleteOne({_id: new ObjectId(id)})
+        const deletedBlog = await this.usersCollection.deleteOne({_id: new ObjectId(id)})
 
         if (deletedBlog.deletedCount < 1) {
             throw new Error(API_ERRORS.id_not_exist);
