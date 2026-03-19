@@ -1,11 +1,11 @@
 import jwt from 'jsonwebtoken';
 import { appConfig } from '../../core/config/config';
 
-export const jwtService = {
+export class JwtService {
     async createJWT(userId: string) {
         const token = jwt.sign({userId: userId}, appConfig.SECRET_KEY, { expiresIn: '1h'})
         return token;
-    },
+    }
     
     async getUserIdByToken(token: string) {
         try {

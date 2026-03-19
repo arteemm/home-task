@@ -1,49 +1,66 @@
-import { UserDBtype } from '../types/userDBtype';
-import { usersCollection } from '../../repositories/db';
-import { WithId, ObjectId } from 'mongodb';
+import { IUserDB } from '../types/userDBInterface';
+// import { usersCollection } from '../../repositories/db';
+import { WithId, ObjectId, Collection } from 'mongodb';
 import { API_ERRORS } from '../../core/constants/apiErrors';
 
 
-export const usersRepository = {
-   async findById(id: string): Promise<WithId<UserDBtype> | null>{
-        if (!ObjectId.isValid(id)) {
-            return new Promise((res, rej) => {
-                res(null)
-            });
+export class UsersRepository {
+    constructor(private usersCollection: Collection<IUserDB>) {}
+
+    async findById(id: string): Promise<WithId<IUserDB> | null>{
+            if (!ObjectId.isValid(id)) {
+                return new Promise((res, rej) => {
+                    res(null)
+                });
+            }
+
+            return this.usersCollection.findOne({_id: new ObjectId(id)});
         }
 
-        return usersCollection.findOne({_id: new ObjectId(id)});
-    },
-
-    async findByLoginOrEmail(loginOrEmail: string): Promise<WithId<UserDBtype> | null>{
-        return usersCollection.findOne({
+    async findByLoginOrEmail(loginOrEmail: string): Promise<WithId<IUserDB> | null>{
+        return this.usersCollection.findOne({
             $or: [{ userName: loginOrEmail }, { email: loginOrEmail }],
         });
-    },
+    }
 
-    async create(newEntity: UserDBtype): Promise<string> {
-        const insertResalt = await usersCollection.insertOne(newEntity);
+    async create(newEntity: IUserDB): Promise<string> {
+        const insertResalt = await this.usersCollection.insertOne(newEntity);
 
         return insertResalt.insertedId.toString();
-    },
+    }
 
-    // async update(id: string, blogParam: ChangeBlog): Promise<void> {
-    //     const matchesResalt = await blogCollection.updateOne({_id: new ObjectId(id)}, {$set: {
-    //         name: blogParam.name,
-    //         description: blogParam.description,
-    //         websiteUrl: blogParam.websiteUrl,
-    //     }});
+    async findByConfirmationCode (code: string): Promise<WithId<IUserDB> | null>{
+        return this.usersCollection.findOne({ 'emailConfirmation.condirmationCode': code });
+    }
 
-    //     if (matchesResalt.matchedCount < 1) {
-    //         throw new Error(API_ERRORS.id_not_exist);
-    //     }
-    // },
+    async updateConfirmationStatus(id: string): Promise<void> {
+        const matchesResalt = await this.usersCollection.updateOne(
+            {_id: new ObjectId(id)},
+            {$set: { 'emailConfirmation.isConfirmed': true }}
+        );
+
+        if (matchesResalt.matchedCount < 1) {
+            throw new Error(API_ERRORS.id_not_exist);
+        }
+    }
+
+    async updateConfirmationCode(id: string, code: string, expirationDate: Date ): Promise<void> {
+        const matchesResalt = await this.usersCollection.updateOne({_id: new ObjectId(id)}, { $set: {
+                    'emailConfirmation.condirmationCode': code,
+                    'emailConfirmation.expirationDate': expirationDate,
+                }});
+
+        if (matchesResalt.matchedCount < 1) {
+            throw new Error(API_ERRORS.id_not_exist);
+        }
+    }
+
 
     async delete(id: string): Promise<void> {
-        const deletedBlog = await usersCollection.deleteOne({_id: new ObjectId(id)})
+        const deletedBlog = await this.usersCollection.deleteOne({_id: new ObjectId(id)})
 
         if (deletedBlog.deletedCount < 1) {
             throw new Error(API_ERRORS.id_not_exist);
         }
     }
-};
+}

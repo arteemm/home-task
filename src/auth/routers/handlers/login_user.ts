@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { authService } from '../../domain/auth-service';
+import { authService } from '../../../composition-root';
 import { LoginUserDto } from '../../types/login-user-dto';
 import { HttpResponceCodes } from '../../../core/constants/responseCodes';
 

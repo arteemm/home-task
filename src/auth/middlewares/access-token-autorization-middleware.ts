@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { jwtService } from '../adapters/jwt.service';
+import { jwtService } from '../../composition-root';
 import { HttpResponceCodes } from '../../core/constants/responseCodes';
 
 
