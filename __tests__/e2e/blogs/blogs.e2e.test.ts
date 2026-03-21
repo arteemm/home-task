@@ -9,6 +9,11 @@ import { getBlogDto } from '../../utils/blogs/get-blog-dto';
 import { getPostDtoWithoutBlogId, getPostDto } from '../../utils/posts/get-post-dto';
 import { createPost } from '../../utils/posts/create-post';
 
+jest.mock('uuid', () => ({
+  v4: () => 'mock-uuid-v4',
+  // mock other exports as needed
+}));
+
  
 describe(BLOGS_PATH, () => {
     const app = express();
