@@ -8,6 +8,8 @@ import { NodeMailerManager } from '../adapters/nodeMailer-manager';
 import { EmailExamples } from '../adapters/emailExamples';
 import { v4 as uuid } from 'uuid';
 import { add } from 'date-fns';
+import { AuthRepository } from '../repositories/auth.repository';
+import { authQueryRepository } from '../repositories/auth.query.repository';
 
 
 export class AuthService {
@@ -17,6 +19,7 @@ export class AuthService {
         protected usersRepository: UsersRepository,
         protected userService: UserService,
         protected jwtService: JwtService,
+        protected authRepository: AuthRepository
     ) {}
 
     async checkUserCredentials(
@@ -35,16 +38,27 @@ export class AuthService {
         };
     }
 
-    async loginUser(loginOrEmail: string, password: string): Promise<string> {
+    async checExistingUserInBlackList(userId: string) {
+        return authQueryRepository.checExistingUserInBlackList(userId);
+    }
+
+    async loginUser(loginOrEmail: string, password: string): Promise<{accessToken: string, refreshToken: string}> {
         const result = await this.checkUserCredentials(loginOrEmail, password);
 
         if (!result.isPasswordValid || !result.userId) {
             throw new Error('Unauthorized');
         }
 
-        const accessToken = await this.jwtService.createJWT(result.userId);
+        const isUserExistInBlackList = await this.checExistingUserInBlackList(result.userId);
 
-        return accessToken;
+        if(!isUserExistInBlackList) {
+            await this.authRepository.create({userId: result.userId, blackListTokens: []});
+        }
+
+        const accessToken = await this.jwtService.createAccessToken(result.userId);
+        const refreshToken = await this.jwtService.createRefreshToken(result.userId);
+
+        return {accessToken, refreshToken};
     }
 
     async createUser(dto: CreateUserDto): Promise<string> {
@@ -102,6 +116,7 @@ export class AuthService {
 
         try {
             await this.usersRepository.updateConfirmationStatus(id);
+            await this.authRepository.create({userId: user._id.toString(), blackListTokens: []});
         } catch(e) {
             console.error('something wrong in registrationConfirmation service')
         }
@@ -138,5 +153,25 @@ export class AuthService {
         }
 
         return id;
+    }
+
+    async getNewAccessAndRefreshTokens(userId: string, expiredRefreshToken: string) {
+        const accessToken = await this.jwtService.createAccessToken(userId);
+        const newRefreshToken = await this.jwtService.createRefreshToken(userId);
+        try {
+            await this.authRepository.update(userId, expiredRefreshToken);
+        } catch(e) {
+            console.error('something wrong in update refresh token');
+        }
+
+        return { accessToken, newRefreshToken };
+    }
+
+    async logoutUser(userId: string, refreshtoken: string) {
+        try {
+            await this.authRepository.update(userId, refreshtoken);
+        } catch(e) {
+            console.error('something wrong in logout user');
+        }
     }
 };

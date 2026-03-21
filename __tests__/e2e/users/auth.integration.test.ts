@@ -9,6 +9,8 @@ import { MongoClient, Db, Collection, ObjectId,  } from 'mongodb';
 import { IUserDB } from '../../../src/users/types/userDBInterface';
 import { v4 as uuid } from 'uuid';
 import { add } from 'date-fns';
+import { AuthRepository } from '../../../src/auth/repositories/auth.repository';
+import { ExpiredRefreshTokents } from '../../../src/auth/types/expired-refresh-tokens';
 
 
 jest.mock('uuid', () => ({
@@ -21,6 +23,7 @@ describe('integration test for AuthService', () => {
     let client: MongoClient;
     let db: Db;
     let usersCollection: Collection<IUserDB>;
+    let expiredRefreshTokentsCollection: Collection<ExpiredRefreshTokents>;
 
     let usersRepository: UsersRepository;
     let userService: UserService;
@@ -28,6 +31,7 @@ describe('integration test for AuthService', () => {
     let emailExamples: EmailExamples;
     let jwtService: JwtService;
     let authService: AuthService;
+    let authRepository: AuthRepository;
 
     beforeAll(async () => {
         mongoServer = await MongoMemoryServer.create();
@@ -35,6 +39,7 @@ describe('integration test for AuthService', () => {
         client = new MongoClient(mongoUri);
         db = client.db('test')
         usersCollection = db.collection<IUserDB>('users');
+        expiredRefreshTokentsCollection = db.collection<ExpiredRefreshTokents>('blackListTokens');
         await client.connect();
 
         usersRepository = new UsersRepository(usersCollection);
@@ -44,6 +49,7 @@ describe('integration test for AuthService', () => {
         };
         emailExamples = new EmailExamples();
         jwtService = new JwtService();
+        authRepository = new AuthRepository(expiredRefreshTokentsCollection);
 
         authService = new AuthService(
             nodeMailerManagerMock,
@@ -51,6 +57,7 @@ describe('integration test for AuthService', () => {
             usersRepository,
             userService,
             jwtService,
+            authRepository,
         );
 
     });
@@ -174,5 +181,47 @@ describe('integration test for AuthService', () => {
             }
         });
 
+    });
+
+    describe('refresh-token', () => {
+        beforeAll(async () => {
+            await db.dropDatabase();
+        })
+
+        const incorrectToken1 = 'token1';
+        const incorrectToken2 = 'token2';
+        const incorrectToken3 = 'token3';
+        const correctToken = 'token4';
+
+        const user = {
+            userName: 'login',
+            email: 'email@mail.ru',
+            passwordHash: 'hash',
+            passwordSalt: 'salt',
+            createdAt: new Date().toISOString(),
+            emailConfirmation: {
+                condirmationCode: 'condirmationCode',
+                expirationDate:  add(new Date(), { minutes: 10 }),
+                isConfirmed: true,
+            }
+            };
+
+        it('should return newRefreshToken', async () => {
+            const createdUser = await usersCollection.insertMany([ user ]);
+            await expiredRefreshTokentsCollection.insertOne({
+                userId: createdUser.insertedIds.toString(),
+                blackListTokens: [incorrectToken1, incorrectToken2, incorrectToken3]
+            })
+
+            const newPair = await authService.getNewAccessAndRefreshTokens(createdUser.insertedIds.toString(), correctToken);
+            const result = await expiredRefreshTokentsCollection.findOne({$and: [
+                {userId: createdUser.insertedIds.toString()},
+                {blackListTokens: { $in: [correctToken]}}
+            ]});
+            const token = result?.blackListTokens.find(r => r === correctToken);
+            expect(token).toBe(correctToken);
+            expect(newPair.newRefreshToken).not.toBe(correctToken);
+            expect(newPair.newRefreshToken).toEqual(expect.any(String));
+        });
     });
 });

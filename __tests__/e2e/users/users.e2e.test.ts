@@ -7,6 +7,12 @@ import { USER_PATH, TESTING_PATH, AUTH_PATH } from '../../../src/core/constants/
 import { getUserDto } from '../../utils/users/get-user-dto';
 import { createUser } from '../../utils/users/create-user';
 
+
+jest.mock('uuid', () => ({
+  v4: () => 'mock-uuid-v4',
+  // mock other exports as needed
+}));
+
  
 describe(USER_PATH, () => {
     const app = express();
@@ -14,6 +20,7 @@ describe(USER_PATH, () => {
 
     let testEntity: UserViewModel = {} as UserViewModel;
     let accessToken: string;
+    let refreshToken: string;
 
     beforeAll(async () => {
         await request(app).delete(TESTING_PATH);
@@ -64,15 +71,53 @@ describe(USER_PATH, () => {
             .expect(HttpResponceCodes.OK_200);
 
         accessToken = responce.body.accessToken;
+        const cookies = responce.header['set-cookie'];
+        const subCookies = Array.from(cookies).find(str => str.split('=')[0] === 'refreshToken');
+        refreshToken = subCookies?.split(';')[0].split('=')[1] || '';
     });
 
-    
     it('should return 200 and user logined params', async () => {
         await request(app)
         .get(AUTH_PATH + '/me')
         .set('Authorization', `Bearer ${accessToken}`)
         .expect(HttpResponceCodes.OK_200, { email: testEntity.email, login: testEntity.login, userId: testEntity.id })
     });
+
+    it('should return 200 and user logined params', async () => {
+        console.log('old',refreshToken);
+        const responce = await request(app)
+        .post(AUTH_PATH + '/refresh-token')
+        .set('Cookie', [`refreshToken=${refreshToken}`])
+        .expect(HttpResponceCodes.OK_200);
+
+        expect(responce.body).toStrictEqual({accessToken: expect.any(String)});
+        expect(responce.header['set-cookie']).not.toBeUndefined();
+        expect(responce.header['set-cookie']).not.toBeNull();
+
+        accessToken = responce.body.accessToken;
+        const cookies = responce.header['set-cookie'];
+        const subCookies = Array.from(cookies).find(str => str.split('=')[0] === 'refreshToken');
+        refreshToken = subCookies?.split(';')[0].split('=')[1] || '';
+        console.log('new',refreshToken);
+    });
+
+    it('should logout user and check that user is logout', async () => {
+        await request(app)
+            .post(AUTH_PATH + '/logout')
+            .set('Cookie', [`refreshToken=${refreshToken}`])
+            .expect(HttpResponceCodes.NO_CONTENT_204);
+
+        await request(app)
+            .post(AUTH_PATH + '/logout')
+            .set('Cookie', [`refreshToken=${refreshToken}`])
+            .expect(HttpResponceCodes.NOT_AUTHORIZED_401);
+
+        await request(app)
+            .post(AUTH_PATH + '/refresh-token')
+            .set('Cookie', [`refreshToken=${refreshToken}`])
+            .expect(HttpResponceCodes.NOT_AUTHORIZED_401);
+    });
+
 
     afterAll((done) => {
         done();  

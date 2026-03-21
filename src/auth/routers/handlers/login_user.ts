@@ -7,8 +7,8 @@ import { HttpResponceCodes } from '../../../core/constants/responseCodes';
 export async function loginUser(req: Request<{}, {}, LoginUserDto, {}>, res: Response) {
     try {
         const { loginOrEmail, password } = req.body;
-        const accessToken = await authService.loginUser(loginOrEmail, password);
-
+        const {accessToken, refreshToken } = await authService.loginUser(loginOrEmail, password);
+        res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: true });
         return res.status(HttpResponceCodes.OK_200).send({accessToken: accessToken});
     } catch(e: unknown) {
         const err = e as { message: string };

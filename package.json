@@ -7,7 +7,7 @@
     "watch": "tsc -w",
     "dev": "nodemon --inspect dist/index.js",
     "jest": "jest -i",
-    "jest-w": "jest -i --watch",
+    "jest-w": "jest -i --watch __tests__/e2e/users/auth.integration.test.ts",
     "lint": "eslint --fix .",
     "format": "prettier --write ."
   },
@@ -28,6 +28,7 @@
     "uuid": "^13.0.0"
   },
   "devDependencies": {
+    "@types/cookie-parser": "^1.4.10",
     "@types/express": "^5.0.6",
     "@types/jest": "^30.0.0",
     "@types/jsonwebtoken": "^9.0.10",
@@ -35,6 +36,7 @@
     "@types/supertest": "^6.0.3",
     "@typescript-eslint/eslint-plugin": "^8.51.0",
     "@typescript-eslint/parser": "^8.51.0",
+    "cookie-parser": "^1.4.7",
     "dotenv": "^17.2.4",
     "eslint": "^9.39.2",
     "eslint-config-prettier": "^10.1.8",

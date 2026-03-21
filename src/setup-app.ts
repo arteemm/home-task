@@ -6,11 +6,14 @@ import { usersRouter } from './users/routers/user-router';
 import { authRouter } from './auth/routers/auth-router';
 import { commentsRouter } from './comments/routers/comment-router';
 import { POSTS_PATH, BLOGS_PATH, TESTING_PATH, USER_PATH, AUTH_PATH, COMMENTS_PATH } from './core/constants/paths';
+import cookieParser from 'cookie-parser'
+
  
 
 export const setupApp = (app: Express) => {
 
   app.use(express.json()); // middleware для парсинга JSON в теле запроса
+  app.use(cookieParser()); // middleware для парсинга JSON в теле запроса
  
   app.use(BLOGS_PATH, blogsRouter);
   app.use(POSTS_PATH, postsRouter);
