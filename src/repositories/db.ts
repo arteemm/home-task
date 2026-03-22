@@ -4,7 +4,7 @@ import { BlogDBType } from '../blogs/types/blogDBtype';
 import { PostDBType } from '../posts/types/postDBtype';
 import { IUserDB } from '../users/types//userDBInterface';
 import { CommentsDBType } from '../comments/types/commentsDBtype';
-import { ExpiredRefreshTokents } from '../auth/types/expired-refresh-tokens';
+import { SecurityDevicesDBtype } from '../securityDevices/types/securityDevicesDBtype';
 
 
 dotenv.config();
@@ -18,7 +18,7 @@ export const blogCollection: Collection<BlogDBType> = db.collection<BlogDBType>(
 export const postsCollection: Collection<PostDBType> = db.collection<PostDBType>('posts');
 export const usersCollection: Collection<IUserDB> = db.collection<IUserDB>('users');
 export const commentsCollection: Collection<CommentsDBType> = db.collection<CommentsDBType>('comments');
-export const expiredRefreshTokentsCollection: Collection<ExpiredRefreshTokents> = db.collection<ExpiredRefreshTokents>('blackListTokens');
+export const securityDevicesCollection: Collection<SecurityDevicesDBtype> = db.collection<SecurityDevicesDBtype>('security-devices');
 
 export async function runDb () {
     try {

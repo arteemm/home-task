@@ -9,8 +9,10 @@ import { MongoClient, Db, Collection, ObjectId,  } from 'mongodb';
 import { IUserDB } from '../../../src/users/types/userDBInterface';
 import { v4 as uuid } from 'uuid';
 import { add } from 'date-fns';
-import { AuthRepository } from '../../../src/auth/repositories/auth.repository';
-import { ExpiredRefreshTokents } from '../../../src/auth/types/expired-refresh-tokens';
+import { SecurityDevicesRepository }  from '../../../src/securityDevices/repositories/securityDevices.repository';
+import { securityDevicesQueryRepository }  from '../../../src/securityDevices/repositories/securityDevices.query.repository';
+import { SecurityDevicesService }  from '../../../src/securityDevices/domain/securityDevices.service';
+import { SecurityDevicesDBtype }  from '../../../src/securityDevices/types/securityDevicesDBtype';
 
 
 jest.mock('uuid', () => ({
@@ -23,15 +25,15 @@ describe('integration test for AuthService', () => {
     let client: MongoClient;
     let db: Db;
     let usersCollection: Collection<IUserDB>;
-    let expiredRefreshTokentsCollection: Collection<ExpiredRefreshTokents>;
-
+    let securityDevicesCollection: Collection<SecurityDevicesDBtype>;
     let usersRepository: UsersRepository;
     let userService: UserService;
     let nodeMailerManagerMock: jest.Mocked<NodeMailerManager>;
     let emailExamples: EmailExamples;
     let jwtService: JwtService;
     let authService: AuthService;
-    let authRepository: AuthRepository;
+    let securityDevicesService: SecurityDevicesService;
+    let securityDevicesRepository: SecurityDevicesRepository;
 
     beforeAll(async () => {
         mongoServer = await MongoMemoryServer.create();
@@ -39,17 +41,18 @@ describe('integration test for AuthService', () => {
         client = new MongoClient(mongoUri);
         db = client.db('test')
         usersCollection = db.collection<IUserDB>('users');
-        expiredRefreshTokentsCollection = db.collection<ExpiredRefreshTokents>('blackListTokens');
+        securityDevicesCollection = db.collection<SecurityDevicesDBtype>('security-devices');
         await client.connect();
 
         usersRepository = new UsersRepository(usersCollection);
         userService = new UserService(usersRepository);
+        securityDevicesRepository = new SecurityDevicesRepository(securityDevicesCollection);
+        securityDevicesService = new SecurityDevicesService(securityDevicesRepository);
         nodeMailerManagerMock = {
             sendEmailConfirmationMessage: jest.fn()
         };
         emailExamples = new EmailExamples();
         jwtService = new JwtService();
-        authRepository = new AuthRepository(expiredRefreshTokentsCollection);
 
         authService = new AuthService(
             nodeMailerManagerMock,
@@ -57,7 +60,7 @@ describe('integration test for AuthService', () => {
             usersRepository,
             userService,
             jwtService,
-            authRepository,
+            securityDevicesService
         );
 
     });
@@ -191,37 +194,40 @@ describe('integration test for AuthService', () => {
         const incorrectToken1 = 'token1';
         const incorrectToken2 = 'token2';
         const incorrectToken3 = 'token3';
-        const correctToken = 'token4';
+        let accessToken: string;
+        let refreshToken: string;
+        const ip = '::1';
+        const title = 'testTitle';
 
-        const user = {
-            userName: 'login',
-            email: 'email@mail.ru',
-            passwordHash: 'hash',
-            passwordSalt: 'salt',
-            createdAt: new Date().toISOString(),
-            emailConfirmation: {
-                condirmationCode: 'condirmationCode',
-                expirationDate:  add(new Date(), { minutes: 10 }),
-                isConfirmed: true,
-            }
-            };
+        const userDto = {
+            login: 'login',
+            password: '123456',
+            email: 'lol@mail.ru'
+        }
+
+        let user ;
 
         it('should return newRefreshToken', async () => {
-            const createdUser = await usersCollection.insertMany([ user ]);
-            await expiredRefreshTokentsCollection.insertOne({
-                userId: createdUser.insertedIds.toString(),
-                blackListTokens: [incorrectToken1, incorrectToken2, incorrectToken3]
+            const userId = await authService.createUser(userDto);
+            const { accessToken, refreshToken } = await authService.loginUser(userDto.login, userDto.password, {ip: ip, title: title});
+            const dataByToken = await jwtService.getDataByToken(refreshToken);
+            const session = await securityDevicesQueryRepository.getSessionByDateIatDateAndDeviceId(userId, dataByToken.iat, dataByToken.deviceId);
+
+            expect(session).toBe({
+                ...dataByToken,
+                ip: ip,
+                title: title
             })
 
-            const newPair = await authService.getNewAccessAndRefreshTokens(createdUser.insertedIds.toString(), correctToken);
-            const result = await expiredRefreshTokentsCollection.findOne({$and: [
-                {userId: createdUser.insertedIds.toString()},
-                {blackListTokens: { $in: [correctToken]}}
-            ]});
-            const token = result?.blackListTokens.find(r => r === correctToken);
-            expect(token).toBe(correctToken);
-            expect(newPair.newRefreshToken).not.toBe(correctToken);
-            expect(newPair.newRefreshToken).toEqual(expect.any(String));
+            // const newPair = await authService.getNewAccessAndRefreshTokens(createdUser.insertedIds.toString(), correctToken);
+            // const result = await expiredRefreshTokentsCollection.findOne({$and: [
+            //     {userId: createdUser.insertedIds.toString()},
+            //     {blackListTokens: { $in: [correctToken]}}
+            // ]});
+            // const token = result?.blackListTokens.find(r => r === correctToken);
+            // expect(token).toBe(correctToken);
+            // expect(newPair.newRefreshToken).not.toBe(correctToken);
+            // expect(newPair.newRefreshToken).toEqual(expect.any(String));
         });
     });
 });

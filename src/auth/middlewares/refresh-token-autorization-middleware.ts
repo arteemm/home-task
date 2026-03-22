@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { jwtService } from '../../composition-root';
 import { HttpResponceCodes } from '../../core/constants/responseCodes';
-import { authQueryRepository } from '../repositories/auth.query.repository';
 
 
 export async function refreshTokenAutorizationMiddleware (req: Request, res: Response, next: NextFunction) {
@@ -21,12 +20,6 @@ export async function refreshTokenAutorizationMiddleware (req: Request, res: Res
         }
     } catch(e) {
         console.error(e);
-        return res.sendStatus(HttpResponceCodes.NOT_AUTHORIZED_401);
-    }
-
-    const isInBlackList = await authQueryRepository.checkRefreshTokenByUserId(result.userId, refreshToken);
-
-    if (isInBlackList) {
         return res.sendStatus(HttpResponceCodes.NOT_AUTHORIZED_401);
     }
 

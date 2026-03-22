@@ -4,8 +4,9 @@ import { JwtService } from './auth/adapters/jwt.service';
 import { UserService } from './users/domain/user-service';
 import { NodeMailerManager } from './auth/adapters/nodeMailer-manager';
 import { EmailExamples } from './auth/adapters/emailExamples';
-import { AuthRepository } from './auth/repositories/auth.repository';
-import { usersCollection, expiredRefreshTokentsCollection } from './repositories/db';
+import { usersCollection, securityDevicesCollection } from './repositories/db';
+import { SecurityDevicesRepository } from './securityDevices/repositories/securityDevices.repository';
+import { SecurityDevicesService } from './securityDevices/domain/securityDevices.service';
 
 
 const usersRepository = new UsersRepository(usersCollection);
@@ -15,8 +16,8 @@ const nodeMailerManager = new NodeMailerManager();
 const emailExamples = new EmailExamples();
 export const jwtService = new JwtService();
 
-const authRepository = new AuthRepository(expiredRefreshTokentsCollection);
-
+const securityDevicesRepository = new SecurityDevicesRepository(securityDevicesCollection);
+export const securityDevicesService = new SecurityDevicesService(securityDevicesRepository);
 
 export const authService = new AuthService(
     nodeMailerManager,
@@ -24,6 +25,6 @@ export const authService = new AuthService(
     usersRepository,
     userService,
     jwtService,
-    authRepository,
+    securityDevicesService,
 );
 

@@ -8,8 +8,11 @@ import { NodeMailerManager } from '../adapters/nodeMailer-manager';
 import { EmailExamples } from '../adapters/emailExamples';
 import { v4 as uuid } from 'uuid';
 import { add } from 'date-fns';
-import { AuthRepository } from '../repositories/auth.repository';
-import { authQueryRepository } from '../repositories/auth.query.repository';
+import { SecurityDevicesService } from '../../securityDevices/domain/securityDevices.service';
+import { securityDevicesQueryRepository } from '../../securityDevices/repositories/securityDevices.query.repository';
+import { SessionDto } from '../../securityDevices/types/session.dto';
+import { CurrentSessions } from '../../securityDevices/types/securityDevicesDBtype';
+
 
 
 export class AuthService {
@@ -19,7 +22,7 @@ export class AuthService {
         protected usersRepository: UsersRepository,
         protected userService: UserService,
         protected jwtService: JwtService,
-        protected authRepository: AuthRepository
+        protected securityDevicesService: SecurityDevicesService,
     ) {}
 
     async checkUserCredentials(
@@ -38,25 +41,34 @@ export class AuthService {
         };
     }
 
-    async checExistingUserInBlackList(userId: string) {
-        return authQueryRepository.checExistingUserInBlackList(userId);
+    private async createNewSession(sessionData: SessionDto, refreshToken: string): Promise<CurrentSessions> {
+        const result = await this.jwtService.getDataByToken(refreshToken);
+
+        return {
+                ip: sessionData.ip,
+                title: sessionData.title,
+                lastActiveDate: result!.iat,
+                deviceId: result!.deviceId,
+        };
     }
 
-    async loginUser(loginOrEmail: string, password: string): Promise<{accessToken: string, refreshToken: string}> {
+    async loginUser(loginOrEmail: string, password: string, sessionData: SessionDto): Promise<{accessToken: string, refreshToken: string}> {
         const result = await this.checkUserCredentials(loginOrEmail, password);
 
         if (!result.isPasswordValid || !result.userId) {
             throw new Error('Unauthorized');
         }
 
-        const isUserExistInBlackList = await this.checExistingUserInBlackList(result.userId);
-
-        if(!isUserExistInBlackList) {
-            await this.authRepository.create({userId: result.userId, blackListTokens: []});
-        }
-
+        const deviceId = uuid();
         const accessToken = await this.jwtService.createAccessToken(result.userId);
-        const refreshToken = await this.jwtService.createRefreshToken(result.userId);
+        const refreshToken = await this.jwtService.createRefreshToken(result.userId, deviceId);
+
+        const isExistSession = await securityDevicesQueryRepository.checkSessionsByUserId(result.userId);
+
+        if(!isExistSession) {
+            const session = await this.createNewSession(sessionData, refreshToken);
+            await this.securityDevicesService.createSession(result.userId, session);
+        }
 
         return {accessToken, refreshToken};
     }
@@ -116,7 +128,6 @@ export class AuthService {
 
         try {
             await this.usersRepository.updateConfirmationStatus(id);
-            await this.authRepository.create({userId: user._id.toString(), blackListTokens: []});
         } catch(e) {
             console.error('something wrong in registrationConfirmation service')
         }
@@ -155,11 +166,26 @@ export class AuthService {
         return id;
     }
 
-    async getNewAccessAndRefreshTokens(userId: string, expiredRefreshToken: string) {
-        const accessToken = await this.jwtService.createAccessToken(userId);
-        const newRefreshToken = await this.jwtService.createRefreshToken(userId);
+    async getNewAccessAndRefreshTokens(userId: string, expiredRefreshToken: string, sessionData: SessionDto) {
+        let result;
+
         try {
-            await this.authRepository.update(userId, expiredRefreshToken);
+            result = await this.jwtService.getDataByToken(expiredRefreshToken);
+        } catch(e) {
+            const err = e as { message: string };
+    
+            if (err?.message === 'token verify error') {
+                throw new Error('Unauthorized');
+            }
+    
+            throw new Error('some error in Auth services');
+        }
+
+        const accessToken = await this.jwtService.createAccessToken(userId);
+        const newRefreshToken = await this.jwtService.createRefreshToken(userId, result!.deviceId);
+        try {
+            const session = await this.createNewSession(sessionData, newRefreshToken);
+            await this.securityDevicesService.updateLastActiveDate(userId, session);
         } catch(e) {
             console.error('something wrong in update refresh token');
         }
@@ -169,7 +195,7 @@ export class AuthService {
 
     async logoutUser(userId: string, refreshtoken: string) {
         try {
-            await this.authRepository.update(userId, refreshtoken);
+            // await this.authRepository.update(userId, refreshtoken);
         } catch(e) {
             console.error('something wrong in logout user');
         }

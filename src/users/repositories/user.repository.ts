@@ -1,5 +1,4 @@
 import { IUserDB } from '../types/userDBInterface';
-// import { usersCollection } from '../../repositories/db';
 import { WithId, ObjectId, Collection } from 'mongodb';
 import { API_ERRORS } from '../../core/constants/apiErrors';
 
@@ -15,7 +14,7 @@ export class UsersRepository {
             }
 
             return this.usersCollection.findOne({_id: new ObjectId(id)});
-        }
+    }
 
     async findByLoginOrEmail(loginOrEmail: string): Promise<WithId<IUserDB> | null>{
         return this.usersCollection.findOne({
