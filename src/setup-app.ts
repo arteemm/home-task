@@ -12,8 +12,10 @@ import { securityDevicesRouter } from './securityDevices/routes/securityDevicesR
 
 export const setupApp = (app: Express) => {
 
+  app.set('trust proxy', true);
+
   app.use(express.json()); // middleware для парсинга JSON в теле запроса
-  app.use(cookieParser()); // middleware для парсинга JSON в теле запроса
+  app.use(cookieParser()); // middleware для парсинга Cookies в теле запроса
  
   app.use(BLOGS_PATH, blogsRouter);
   app.use(POSTS_PATH, postsRouter);

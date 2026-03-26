@@ -3,6 +3,7 @@ export type CurrentSessions = {
     title: string;
     lastActiveDate: number;
     deviceId: string;
+    originalUrl: string;
 };
 
 export type SecurityDevicesDBtype = {

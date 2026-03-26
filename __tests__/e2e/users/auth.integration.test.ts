@@ -7,18 +7,11 @@ import { EmailExamples } from '../../../src/auth/adapters/emailExamples';
 import { MongoMemoryServer } from 'mongodb-memory-server-global-4.4';
 import { MongoClient, Db, Collection, ObjectId,  } from 'mongodb';
 import { IUserDB } from '../../../src/users/types/userDBInterface';
-import { v4 as uuid } from 'uuid';
 import { add } from 'date-fns';
 import { SecurityDevicesRepository }  from '../../../src/securityDevices/repositories/securityDevices.repository';
-import { securityDevicesQueryRepository }  from '../../../src/securityDevices/repositories/securityDevices.query.repository';
 import { SecurityDevicesService }  from '../../../src/securityDevices/domain/securityDevices.service';
 import { SecurityDevicesDBtype }  from '../../../src/securityDevices/types/securityDevicesDBtype';
 
-
-jest.mock('uuid', () => ({
-  v4: () => 'mock-uuid-v4',
-  // mock other exports as needed
-}));
 
 describe('integration test for AuthService', () => {
     let mongoServer: MongoMemoryServer;
@@ -44,15 +37,17 @@ describe('integration test for AuthService', () => {
         securityDevicesCollection = db.collection<SecurityDevicesDBtype>('security-devices');
         await client.connect();
 
+        emailExamples = new EmailExamples();
+        jwtService = new JwtService();
+
         usersRepository = new UsersRepository(usersCollection);
         userService = new UserService(usersRepository);
         securityDevicesRepository = new SecurityDevicesRepository(securityDevicesCollection);
-        securityDevicesService = new SecurityDevicesService(securityDevicesRepository);
+        securityDevicesService = new SecurityDevicesService(securityDevicesRepository, jwtService);
         nodeMailerManagerMock = {
             sendEmailConfirmationMessage: jest.fn()
         };
-        emailExamples = new EmailExamples();
-        jwtService = new JwtService();
+
 
         authService = new AuthService(
             nodeMailerManagerMock,
@@ -190,14 +185,12 @@ describe('integration test for AuthService', () => {
         beforeAll(async () => {
             await db.dropDatabase();
         })
-
-        const incorrectToken1 = 'token1';
-        const incorrectToken2 = 'token2';
-        const incorrectToken3 = 'token3';
-        let accessToken: string;
-        let refreshToken: string;
         const ip = '::1';
+        const anotherIp = '::2';
         const title = 'testTitle';
+        const originalUrl = 'http.com';
+        const anotherOriginalUrl = 'www.com';
+        let validRefreshToken: string;
 
         const userDto = {
             login: 'login',
@@ -205,29 +198,56 @@ describe('integration test for AuthService', () => {
             email: 'lol@mail.ru'
         }
 
-        let user ;
-
         it('should return newRefreshToken', async () => {
             const userId = await authService.createUser(userDto);
-            const { accessToken, refreshToken } = await authService.loginUser(userDto.login, userDto.password, {ip: ip, title: title});
+            const { accessToken, refreshToken } = await authService.loginUser(userDto.login, userDto.password, {ip: ip, title: title, originalUrl: originalUrl});
             const dataByToken = await jwtService.getDataByToken(refreshToken);
-            const session = await securityDevicesQueryRepository.getSessionByDateIatDateAndDeviceId(userId, dataByToken.iat, dataByToken.deviceId);
+            const session = await securityDevicesCollection.findOne({
+                        userId: userId,
+                        'currentSessions.lastActiveDate': dataByToken.iat,
+                        'currentSessions.deviceId': dataByToken.deviceId,
+                    });
 
-            expect(session).toBe({
-                ...dataByToken,
-                ip: ip,
-                title: title
-            })
+            expect(session).toEqual({
+                _id: expect.any(ObjectId),
+                userId: userId,
+                currentSessions: [
+                    {
+                        deviceId: dataByToken.deviceId,
+                        ip: ip,
+                        title: title,
+                        lastActiveDate: dataByToken.iat,
+                        originalUrl: originalUrl,
+                    }
+                ]
+            });
 
-            // const newPair = await authService.getNewAccessAndRefreshTokens(createdUser.insertedIds.toString(), correctToken);
-            // const result = await expiredRefreshTokentsCollection.findOne({$and: [
-            //     {userId: createdUser.insertedIds.toString()},
-            //     {blackListTokens: { $in: [correctToken]}}
-            // ]});
-            // const token = result?.blackListTokens.find(r => r === correctToken);
-            // expect(token).toBe(correctToken);
-            // expect(newPair.newRefreshToken).not.toBe(correctToken);
-            // expect(newPair.newRefreshToken).toEqual(expect.any(String));
+            const newPair = await authService.getNewAccessAndRefreshTokens(userId, refreshToken, {ip: anotherIp, originalUrl: anotherOriginalUrl});
+            expect(newPair.newRefreshToken).not.toBe(refreshToken);
+            expect(newPair.newRefreshToken).toEqual(expect.any(String));
+            validRefreshToken = newPair.newRefreshToken;
+
+            const newDataByToken = await jwtService.getDataByToken(newPair.newRefreshToken);
+            const newSession = await securityDevicesCollection.findOne({
+                userId: userId,
+                'currentSessions.lastActiveDate': newDataByToken.iat,
+                'currentSessions.deviceId': newDataByToken.deviceId,
+            });
+            expect(newSession?.currentSessions).not.toBeNull();
+            expect(newSession!.currentSessions).toStrictEqual([
+                {
+                    deviceId: dataByToken.deviceId,
+                    ip: anotherIp,
+                    title: title,
+                    lastActiveDate: newDataByToken.iat,
+                    originalUrl: anotherOriginalUrl,
+                }
+            ]);
+        });
+
+        it('should return Unauthorized for invalit token', async () => {
+            const user = {}
         });
     });
+
 });

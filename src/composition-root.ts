@@ -17,7 +17,7 @@ const emailExamples = new EmailExamples();
 export const jwtService = new JwtService();
 
 const securityDevicesRepository = new SecurityDevicesRepository(securityDevicesCollection);
-export const securityDevicesService = new SecurityDevicesService(securityDevicesRepository);
+export const securityDevicesService = new SecurityDevicesService(securityDevicesRepository, jwtService);
 
 export const authService = new AuthService(
     nodeMailerManager,

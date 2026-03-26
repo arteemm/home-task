@@ -18,7 +18,11 @@ export class JwtService {
         try {
             return jwt.verify(token, appConfig.SECRET_KEY) as { userId: string };
         } catch(e: unknown) {
-            console.error('token verify error ' + e);
+            
+            if (process.env.NODE_ENV !== 'test') {
+                console.error('token verify error ' + e);
+            }
+
             return null;
         }
     }

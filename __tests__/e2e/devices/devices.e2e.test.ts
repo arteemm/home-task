@@ -6,12 +6,7 @@ import { UserViewModel } from '../../../src/users/types/user-view-model';
 import { USER_PATH, TESTING_PATH, AUTH_PATH, SECURITY_DEVICES_PATH } from '../../../src/core/constants/paths';
 import { getUserDto } from '../../utils/users/get-user-dto';
 import { createUser } from '../../utils/users/create-user';
-
-
-jest.mock('uuid', () => ({
-  v4: () => 'mock-uuid-v4',
-  // mock other exports as needed
-}));
+import { client } from '../../../src/repositories/db';
 
  
 describe(USER_PATH, () => {
@@ -21,6 +16,12 @@ describe(USER_PATH, () => {
     let user: UserViewModel = {} as UserViewModel;
     let accessToken: string;
     let refreshToken: string;
+    let refreshTokenBydevice2: string;
+    let refreshTokenBydevice3: string;
+    let headers = {
+        'X-Forwarded-For': '::4',
+        'User-Agent': 'customUserAgent', 
+    };
 
     beforeAll(async () => {
         await request(app).delete(TESTING_PATH);
@@ -29,6 +30,7 @@ describe(USER_PATH, () => {
 
         const responce = await request(app)
             .post(AUTH_PATH + '/login')
+            .set(headers)
             .send({loginOrEmail: user.login, password: getUserDto().password})
             .expect(HttpResponceCodes.OK_200);
 
@@ -39,91 +41,185 @@ describe(USER_PATH, () => {
     });
 
     it('should return 200 and empty array', async () => {
-        await request(app)
+        const result = await request(app)
         .get(SECURITY_DEVICES_PATH)
         .set('Cookie', [`refreshToken=${refreshToken}`])
         .expect(HttpResponceCodes.OK_200)
+
+        expect(result.body).toEqual([{
+            ip: headers['X-Forwarded-For'],
+            title: headers['User-Agent'],
+            lastActiveDate: expect.any(String),
+            deviceId: expect.any(String),
+        }]);
     });
 
+    it('should delete all sessions except device id', async () => {
+            const headersDevice2 = {
+                'X-Forwarded-For': '::2',
+                'User-Agent': 'device2', 
+            };
 
+            const headersdevice3 = {
+                'X-Forwarded-For': '::5',
+                'User-Agent': 'device2', 
+            };
+        const loginDevice2 = await request(app)
+            .post(AUTH_PATH + '/login')
+            .set(headersDevice2)
+            .send({loginOrEmail: user.login, password: getUserDto().password})
+            .expect(HttpResponceCodes.OK_200);
 
-    // it('should delete entity with correct  id, 204', async () => {
-    //     const createResponce = await createUser(app, getUserDto({login: 'uniLogin1', email: 'UniqueEmail1@mail.ru'}), HttpResponceCodes.CREATED_201);
+        const cookies2 = loginDevice2.header['set-cookie'];
+        const subCookies2 = Array.from(cookies2).find(str => str.split('=')[0] === 'refreshToken');
+        refreshTokenBydevice2 = subCookies2?.split(';')[0].split('=')[1] || '';
 
-    //     await request(app)
-    //         .delete(USER_PATH + `/${createResponce.id}`)
-    //         .auth('admin', 'qwerty')
-    //         .expect(HttpResponceCodes.NO_CONTENT_204);
+        
+        const loginDevice3 = await request(app)
+            .post(AUTH_PATH + '/login')
+            .set(headersdevice3)
+            .send({loginOrEmail: user.login, password: getUserDto().password})
+            .expect(HttpResponceCodes.OK_200);
 
-    //     await request(app)
-    //         .get(USER_PATH)
-    //         .auth('admin', 'qwerty')
-    //         .expect(HttpResponceCodes.OK_200, { pagesCount: 1, page: 1, pageSize: 10, totalCount: 1, items: [{ ...testEntity }] });
-    // });
+        const cookies3 = loginDevice3.header['set-cookie'];
+        const subCookies3 = Array.from(cookies3).find(str => str.split('=')[0] === 'refreshToken');
+        refreshTokenBydevice3 = subCookies3?.split(';')[0].split('=')[1] || '';
 
-    // it('should login entity with correct login and password, 204', async () => {
-    //     const user = getUserDto({login: 'uniLogin2', email: 'UniqueEmail2@mail.ru'});
+        const result = await request(app)
+        .get(SECURITY_DEVICES_PATH)
+        .set('Cookie', [`refreshToken=${refreshToken}`])
+        .expect(HttpResponceCodes.OK_200)
 
-    //     await request(app)
-    //         .post(AUTH_PATH + '/login')
-    //         .send({loginOrEmail: testEntity.login, password: user.password})
-    //         .expect(HttpResponceCodes.OK_200);
-           
-    //     const responce = await request(app)
-    //         .post(AUTH_PATH + '/login')
-    //         .send({loginOrEmail: testEntity.email, password: user.password})
-    //         .expect(HttpResponceCodes.OK_200);
+        expect(result.body).toEqual([
+            {
+                ip: headers['X-Forwarded-For'],
+                title: headers['User-Agent'],
+                lastActiveDate: expect.any(String),
+                deviceId: expect.any(String),
+            },
+            {
+                ip: headersDevice2['X-Forwarded-For'],
+                title: headersDevice2['User-Agent'],
+                lastActiveDate: expect.any(String),
+                deviceId: expect.any(String),
+            },
+            {
+                ip: headersdevice3['X-Forwarded-For'],
+                title: headersdevice3['User-Agent'],
+                lastActiveDate: expect.any(String),
+                deviceId: expect.any(String),
+            },
+        ]);
 
-    //     accessToken = responce.body.accessToken;
-    //     const cookies = responce.header['set-cookie'];
-    //     const subCookies = Array.from(cookies).find(str => str.split('=')[0] === 'refreshToken');
-    //     refreshToken = subCookies?.split(';')[0].split('=')[1] || '';
-    // });
+        await request(app)
+            .delete(SECURITY_DEVICES_PATH)
+            .set('Cookie', [`refreshToken=${refreshTokenBydevice2}`])
+            .expect(HttpResponceCodes.NO_CONTENT_204)
 
-    // it('should return 200 and user logined params', async () => {
-    //     await request(app)
-    //     .get(AUTH_PATH + '/me')
-    //     .set('Authorization', `Bearer ${accessToken}`)
-    //     .expect(HttpResponceCodes.OK_200, { email: testEntity.email, login: testEntity.login, userId: testEntity.id })
-    // });
+        const result2 = await request(app)
+            .get(SECURITY_DEVICES_PATH)
+            .set('Cookie', [`refreshToken=${refreshToken}`])
+            .expect(HttpResponceCodes.OK_200)
 
-    // it('should return 200 and user logined params', async () => {
-    //     console.log('old',refreshToken);
-    //     const responce = await request(app)
-    //     .post(AUTH_PATH + '/refresh-token')
-    //     .set('Cookie', [`refreshToken=${refreshToken}`])
-    //     .expect(HttpResponceCodes.OK_200);
+        
+        expect(result2.body).toEqual([
+            {
+                ip: headersDevice2['X-Forwarded-For'],
+                title: headersDevice2['User-Agent'],
+                lastActiveDate: expect.any(String),
+                deviceId: expect.any(String),
+            },
+        ]);
 
-    //     expect(responce.body).toStrictEqual({accessToken: expect.any(String)});
-    //     expect(responce.header['set-cookie']).not.toBeUndefined();
-    //     expect(responce.header['set-cookie']).not.toBeNull();
+        headers['User-Agent'] = headersDevice2['User-Agent'] ;
+        headers['X-Forwarded-For'] = headersDevice2['X-Forwarded-For'];
+    });
 
-    //     accessToken = responce.body.accessToken;
-    //     const cookies = responce.header['set-cookie'];
-    //     const subCookies = Array.from(cookies).find(str => str.split('=')[0] === 'refreshToken');
-    //     refreshToken = subCookies?.split(';')[0].split('=')[1] || '';
-    //     console.log('new',refreshToken);
-    // });
+      it('should delete one session by id', async () => {
+            const headersDevice2 = {
+                'X-Forwarded-For': '::43',
+                'User-Agent': 'device2', 
+            };
 
-    // it('should logout user and check that user is logout', async () => {
-    //     await request(app)
-    //         .post(AUTH_PATH + '/logout')
-    //         .set('Cookie', [`refreshToken=${refreshToken}`])
-    //         .expect(HttpResponceCodes.NO_CONTENT_204);
+            const headersdevice3 = {
+                'X-Forwarded-For': '::55',
+                'User-Agent': 'device2', 
+            };
+        const loginDevice2 = await request(app)
+            .post(AUTH_PATH + '/login')
+            .set(headersDevice2)
+            .send({loginOrEmail: user.login, password: getUserDto().password})
+            .expect(HttpResponceCodes.OK_200);
 
-    //     await request(app)
-    //         .post(AUTH_PATH + '/logout')
-    //         .set('Cookie', [`refreshToken=${refreshToken}`])
-    //         .expect(HttpResponceCodes.NOT_AUTHORIZED_401);
+        const cookies2 = loginDevice2.header['set-cookie'];
+        const subCookies2 = Array.from(cookies2).find(str => str.split('=')[0] === 'refreshToken');
+        refreshTokenBydevice2 = subCookies2?.split(';')[0].split('=')[1] || '';
 
-    //     await request(app)
-    //         .post(AUTH_PATH + '/refresh-token')
-    //         .set('Cookie', [`refreshToken=${refreshToken}`])
-    //         .expect(HttpResponceCodes.NOT_AUTHORIZED_401);
-    // });
+        
+        const loginDevice3 = await request(app)
+            .post(AUTH_PATH + '/login')
+            .set(headersdevice3)
+            .send({loginOrEmail: user.login, password: getUserDto().password})
+            .expect(HttpResponceCodes.OK_200);
 
+        const cookies3 = loginDevice3.header['set-cookie'];
+        const subCookies3 = Array.from(cookies3).find(str => str.split('=')[0] === 'refreshToken');
+        refreshTokenBydevice3 = subCookies3?.split(';')[0].split('=')[1] || '';
 
-    afterAll((done) => {
-        done();  
+        const result = await request(app)
+            .get(SECURITY_DEVICES_PATH)
+            .set('Cookie', [`refreshToken=${refreshToken}`])
+            .expect(HttpResponceCodes.OK_200)
+
+        expect(result.body).toEqual([
+            {
+                ip: headers['X-Forwarded-For'],
+                title: headers['User-Agent'],
+                lastActiveDate: expect.any(String),
+                deviceId: expect.any(String),
+            },
+            {
+                ip: headersDevice2['X-Forwarded-For'],
+                title: headersDevice2['User-Agent'],
+                lastActiveDate: expect.any(String),
+                deviceId: expect.any(String),
+            },
+            {
+                ip: headersdevice3['X-Forwarded-For'],
+                title: headersdevice3['User-Agent'],
+                lastActiveDate: expect.any(String),
+                deviceId: expect.any(String),
+            },
+        ]);
+
+        await request(app)
+            .delete(SECURITY_DEVICES_PATH + `/${result.body[2].deviceId}`)
+            .set('Cookie', [`refreshToken=${refreshTokenBydevice3}`])
+            .expect(HttpResponceCodes.NO_CONTENT_204)
+
+        const result2 = await request(app)
+            .get(SECURITY_DEVICES_PATH)
+            .set('Cookie', [`refreshToken=${refreshToken}`])
+            .expect(HttpResponceCodes.OK_200)
+
+        
+        expect(result2.body).toEqual([
+            {
+                ip: headers['X-Forwarded-For'],
+                title: headers['User-Agent'],
+                lastActiveDate: expect.any(String),
+                deviceId: expect.any(String),
+            },
+            {
+                ip: headersDevice2['X-Forwarded-For'],
+                title: headersDevice2['User-Agent'],
+                lastActiveDate: expect.any(String),
+                deviceId: expect.any(String),
+            },
+        ]);
+    });
+
+    afterAll(async () => {
+        await client.close();
     })
 });

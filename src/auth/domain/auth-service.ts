@@ -6,10 +6,8 @@ import { CreateUserDto } from '../../users/types/create-user-dto';
 import { User } from '../../users/domain/user.entity';
 import { NodeMailerManager } from '../adapters/nodeMailer-manager';
 import { EmailExamples } from '../adapters/emailExamples';
-import { v4 as uuid } from 'uuid';
 import { add } from 'date-fns';
 import { SecurityDevicesService } from '../../securityDevices/domain/securityDevices.service';
-import { securityDevicesQueryRepository } from '../../securityDevices/repositories/securityDevices.query.repository';
 import { SessionDto } from '../../securityDevices/types/session.dto';
 import { CurrentSessions } from '../../securityDevices/types/securityDevicesDBtype';
 
@@ -49,6 +47,18 @@ export class AuthService {
                 title: sessionData.title,
                 lastActiveDate: result!.iat,
                 deviceId: result!.deviceId,
+                originalUrl: sessionData.originalUrl
+        };
+    }
+
+    private async updateSession(sessionData: Omit<SessionDto, 'title'>, refreshToken: string): Promise<Omit<CurrentSessions, 'title'>> {
+        const result = await this.jwtService.getDataByToken(refreshToken);
+
+        return {
+                ip: sessionData.ip,
+                lastActiveDate: result!.iat,
+                deviceId: result!.deviceId,
+                originalUrl: sessionData.originalUrl
         };
     }
 
@@ -59,15 +69,16 @@ export class AuthService {
             throw new Error('Unauthorized');
         }
 
-        const deviceId = uuid();
+        const deviceId = crypto.randomUUID();
         const accessToken = await this.jwtService.createAccessToken(result.userId);
         const refreshToken = await this.jwtService.createRefreshToken(result.userId, deviceId);
-
-        const isExistSession = await securityDevicesQueryRepository.checkSessionsByUserId(result.userId);
+        const isExistSession = await this.securityDevicesService.checkSessionsByUserId(result.userId);
+        const session = await this.createNewSession(sessionData, refreshToken);
 
         if(!isExistSession) {
-            const session = await this.createNewSession(sessionData, refreshToken);
             await this.securityDevicesService.createSession(result.userId, session);
+        } else {
+            await this.securityDevicesService.addSession(result.userId, session);
         }
 
         return {accessToken, refreshToken};
@@ -146,7 +157,7 @@ export class AuthService {
         }
 
         const id = user._id.toString();
-        const newConfirmationCode = uuid();
+        const newConfirmationCode = crypto.randomUUID();
         const expirationDate = add(new Date(), {
                 hours: 1,
                 // minutes: 1,
@@ -166,25 +177,24 @@ export class AuthService {
         return id;
     }
 
-    async getNewAccessAndRefreshTokens(userId: string, expiredRefreshToken: string, sessionData: SessionDto) {
+    async getNewAccessAndRefreshTokens(userId: string, expiredRefreshToken: string, sessionData: Omit<SessionDto, 'title'>) {
+        const isNotExpired = await this.securityDevicesService.checkRefreshTokenForExist(userId, expiredRefreshToken);
+        if (!isNotExpired) {
+            throw new Error('Unauthorized')
+        }
+
         let result;
 
         try {
             result = await this.jwtService.getDataByToken(expiredRefreshToken);
         } catch(e) {
-            const err = e as { message: string };
-    
-            if (err?.message === 'token verify error') {
-                throw new Error('Unauthorized');
-            }
-    
-            throw new Error('some error in Auth services');
+            throw new Error('Unauthorized');
         }
 
         const accessToken = await this.jwtService.createAccessToken(userId);
         const newRefreshToken = await this.jwtService.createRefreshToken(userId, result!.deviceId);
         try {
-            const session = await this.createNewSession(sessionData, newRefreshToken);
+            const session = await this.updateSession(sessionData, newRefreshToken);
             await this.securityDevicesService.updateLastActiveDate(userId, session);
         } catch(e) {
             console.error('something wrong in update refresh token');
@@ -193,9 +203,16 @@ export class AuthService {
         return { accessToken, newRefreshToken };
     }
 
-    async logoutUser(userId: string, refreshtoken: string) {
+    async logoutUser(userId: string, refreshToken: string) {
+        const result = await this.securityDevicesService.checkRefreshTokenForExist(userId, refreshToken);
+
+        if (!result) {
+            throw new Error('Unauthorized')
+        }
+
         try {
-            // await this.authRepository.update(userId, refreshtoken);
+            const { deviceId } = await this.jwtService.getDataByToken(refreshToken);
+            await this.securityDevicesService.deleteSession(userId, deviceId);
         } catch(e) {
             console.error('something wrong in logout user');
         }

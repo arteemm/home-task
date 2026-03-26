@@ -9,12 +9,7 @@ import { createUser } from '../../utils/users/create-user';
 import { getUserDto } from '../../utils/users/get-user-dto';
 import { UserViewModel } from '../../../src/users/types/user-view-model';
 import { loginUser } from '../../utils/users/login-user';
-
-
-jest.mock('uuid', () => ({
-  v4: () => 'mock-uuid-v4',
-  // mock other exports as needed
-}));
+import { client } from '../../../src/repositories/db';
 
 
 describe('User API body validation check', () => {
@@ -97,9 +92,9 @@ describe('User API body validation check', () => {
             .expect(HttpResponceCodes.NOT_AUTHORIZED_401);
 
         await request(app)
-        .get(AUTH_PATH + '/me')
-        .set('Authorization', `Bearer ${'asdasda.123123.dsadsa'}`)
-        .expect(HttpResponceCodes.NOT_AUTHORIZED_401)
+            .get(AUTH_PATH + '/me')
+            .set('Authorization', `Bearer ${'asdasda.123123.dsadsa'}`)
+            .expect(HttpResponceCodes.NOT_AUTHORIZED_401);
         
         await request(app)
             .get(USER_PATH)
@@ -113,7 +108,7 @@ describe('User API body validation check', () => {
         .expect(HttpResponceCodes.NOT_AUTHORIZED_401);
     });
 
-    afterAll((done) => {
-        done();
+    afterAll(async () => {
+        await client.close();
     })
 });

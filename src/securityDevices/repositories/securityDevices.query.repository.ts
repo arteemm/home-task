@@ -11,14 +11,11 @@ export const securityDevicesQueryRepository = {
         if (!result) {
             return null;
         }
-
         return this._mapToListDevicesViewModel(result.currentSessions);
     },
 
-    async getSessionByDateIatDateAndDeviceId(userId: string, iat: number, deviceId: string): Promise<CurrentSessions | null> {
+    async getSessionByDeviceId(deviceId: string): Promise<SecurityDevicesViewModel | null> {
         const result = await securityDevicesCollection.findOne({
-            userId: userId,
-            'currentSessions.lastActiveDate': iat,
             'currentSessions.deviceId': deviceId,
         });
 
@@ -26,17 +23,8 @@ export const securityDevicesQueryRepository = {
             return null;
         }
 
-        return this._mapToDeviceSessionModel(deviceId, result.currentSessions);
-    },
-
-    async checkSessionsByUserId(userId: string): Promise<boolean> {
-        const result = await securityDevicesCollection.findOne({userId: userId});
-
-        if(!result) {
-            return false;
-        }
-
-        return true;
+        const currentSession = result.currentSessions.find((item: CurrentSessions) => item.deviceId === deviceId) as CurrentSessions;
+        return this._mapTotDeviceViewModel(currentSession)
     },
 
     _mapToListDevicesViewModel(data: CurrentSessions[]): SecurityDevicesViewModel[] {
@@ -50,7 +38,12 @@ export const securityDevicesQueryRepository = {
         });
     },
 
-    _mapToDeviceSessionModel(deviceId: string, data: CurrentSessions[]): CurrentSessions {
-        return data.find((item: CurrentSessions) => item.deviceId === deviceId) as CurrentSessions;
-    }
+    _mapTotDeviceViewModel(data: CurrentSessions): SecurityDevicesViewModel {
+        return {
+                ip: data.ip,
+                title: data.title,
+                lastActiveDate: `${data.lastActiveDate}`,
+                deviceId: data.deviceId,
+            };
+    },
 };

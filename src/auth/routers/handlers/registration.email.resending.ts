@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { authService } from '../../../composition-root';
 import { HttpResponceCodes } from '../../../core/constants/responseCodes';
 import { API_ERRORS } from '../../../core/constants/apiErrors';
+import { rateLimitRepository } from '../../repositories/rate.limit.repositories';
 
 
 export async function registrationEmailResending(req: Request<{}, {}, {email: string}, {}>, res: Response) {
@@ -9,6 +10,8 @@ export async function registrationEmailResending(req: Request<{}, {}, {email: st
         const { email } = req.body;
         const responce = await authService.registrationEmailResending(email);
 
+        const limitId = Buffer.from(req.ip + req.originalUrl).toString('base64');
+        await rateLimitRepository.deleteAllActivities(limitId);
         return res.sendStatus(HttpResponceCodes.NO_CONTENT_204);
     } catch(e: unknown) {
         const err = e as { message: string };
