@@ -6,8 +6,8 @@
   "scripts": {
     "watch": "tsc -w",
     "dev": "nodemon --inspect dist/index.js",
-    "jest": "jest -i",
-    "jest-w": "jest -i --watch __tests__/e2e/users/auth.integration.test.ts",
+    "jest": "jest -i --verbose",
+    "jest-w": "jest -i --watch --verbose __tests__/e2e/users/auth.integration.test.ts",
     "lint": "eslint --fix .",
     "format": "prettier --write ."
   },
@@ -24,8 +24,7 @@
     "express-validator": "^7.3.1",
     "jsonwebtoken": "^9.0.3",
     "mongodb": "^7.1.0",
-    "nodemailer": "^8.0.2",
-    "uuid": "^13.0.0"
+    "nodemailer": "^8.0.2"
   },
   "devDependencies": {
     "@types/cookie-parser": "^1.4.10",

@@ -6,14 +6,9 @@ import { UserViewModel } from '../../../src/users/types/user-view-model';
 import { USER_PATH, TESTING_PATH, AUTH_PATH } from '../../../src/core/constants/paths';
 import { getUserDto } from '../../utils/users/get-user-dto';
 import { createUser } from '../../utils/users/create-user';
+import { client } from '../../../src/repositories/db';
 
 
-jest.mock('uuid', () => ({
-  v4: () => 'mock-uuid-v4',
-  // mock other exports as needed
-}));
-
- 
 describe(USER_PATH, () => {
     const app = express();
     setupApp(app);
@@ -84,11 +79,10 @@ describe(USER_PATH, () => {
     });
 
     it('should return 200 and user logined params', async () => {
-        console.log('old',refreshToken);
         const responce = await request(app)
-        .post(AUTH_PATH + '/refresh-token')
-        .set('Cookie', [`refreshToken=${refreshToken}`])
-        .expect(HttpResponceCodes.OK_200);
+            .post(AUTH_PATH + '/refresh-token')
+            .set('Cookie', [`refreshToken=${refreshToken}`])
+            .expect(HttpResponceCodes.OK_200);
 
         expect(responce.body).toStrictEqual({accessToken: expect.any(String)});
         expect(responce.header['set-cookie']).not.toBeUndefined();
@@ -98,7 +92,6 @@ describe(USER_PATH, () => {
         const cookies = responce.header['set-cookie'];
         const subCookies = Array.from(cookies).find(str => str.split('=')[0] === 'refreshToken');
         refreshToken = subCookies?.split(';')[0].split('=')[1] || '';
-        console.log('new',refreshToken);
     });
 
     it('should logout user and check that user is logout', async () => {
@@ -119,7 +112,7 @@ describe(USER_PATH, () => {
     });
 
 
-    afterAll((done) => {
-        done();  
+    afterAll(async () => {
+        await client.close();
     })
 });

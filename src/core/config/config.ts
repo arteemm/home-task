@@ -1,6 +1,8 @@
 import { config } from 'dotenv';
 
-config();
+config({
+    quiet: true
+});
 
 export const appConfig = {
     PORT: process.env.PORT,

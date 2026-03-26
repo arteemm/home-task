@@ -12,6 +12,7 @@ import { resendingEmailValidation } from './body.input-dto.validation-middleware
 import { createUserValidation } from '../../users/routers/body.input-dto.validation-middleware';
 import { accessTokenAutorizationMiddleware } from '../middlewares/access-token-autorization-middleware';
 import { refreshTokenAutorizationMiddleware } from '../middlewares/refresh-token-autorization-middleware';
+import { rateLimitMiddleware } from '../middlewares/rate-limit-middleware';
 
 
 export const authRouter: express.Router = Router({});
@@ -26,24 +27,28 @@ authRouter.get(
 authRouter.post(
     '/login',
     loginUserValidation,
+    rateLimitMiddleware,
     loginUser
 );
 
 authRouter.post(
     '/registration',
     createUserValidation,
+    rateLimitMiddleware,
     registrationUser
 );
 
 authRouter.post(
     '/registration-confirmation',
     confirmationCodeValidation,
+    rateLimitMiddleware,
     registrationConfirmationUser
 );
 
 authRouter.post(
     '/registration-email-resending',
     resendingEmailValidation,
+    rateLimitMiddleware,
     registrationEmailResending
 );
 

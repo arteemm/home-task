@@ -1,0 +1,49 @@
+import { securityDevicesCollection } from '../../repositories/db';
+import { SecurityDevicesViewModel } from '../types/securityDevices-view-model';
+import { CurrentSessions } from '../types/securityDevicesDBtype';
+import { WithId } from 'mongodb';
+
+
+export const securityDevicesQueryRepository = {
+    async findAll(userId: string): Promise<SecurityDevicesViewModel[] | null> {
+        const result = await securityDevicesCollection.findOne({userId: userId});
+
+        if (!result) {
+            return null;
+        }
+        return this._mapToListDevicesViewModel(result.currentSessions);
+    },
+
+    async getSessionByDeviceId(deviceId: string): Promise<SecurityDevicesViewModel | null> {
+        const result = await securityDevicesCollection.findOne({
+            'currentSessions.deviceId': deviceId,
+        });
+
+        if(!result) {
+            return null;
+        }
+
+        const currentSession = result.currentSessions.find((item: CurrentSessions) => item.deviceId === deviceId) as CurrentSessions;
+        return this._mapTotDeviceViewModel(currentSession)
+    },
+
+    _mapToListDevicesViewModel(data: CurrentSessions[]): SecurityDevicesViewModel[] {
+        return data.map((item: CurrentSessions) => {
+            return {
+                ip: item.ip,
+                title: item.title,
+                lastActiveDate: `${item.lastActiveDate}`,
+                deviceId: item.deviceId,
+            };
+        });
+    },
+
+    _mapTotDeviceViewModel(data: CurrentSessions): SecurityDevicesViewModel {
+        return {
+                ip: data.ip,
+                title: data.title,
+                lastActiveDate: `${data.lastActiveDate}`,
+                deviceId: data.deviceId,
+            };
+    },
+};

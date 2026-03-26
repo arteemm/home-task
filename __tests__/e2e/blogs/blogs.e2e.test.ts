@@ -8,11 +8,7 @@ import { createBlog } from '../../utils/blogs/create-blog';
 import { getBlogDto } from '../../utils/blogs/get-blog-dto';
 import { getPostDtoWithoutBlogId, getPostDto } from '../../utils/posts/get-post-dto';
 import { createPost } from '../../utils/posts/create-post';
-
-jest.mock('uuid', () => ({
-  v4: () => 'mock-uuid-v4',
-  // mock other exports as needed
-}));
+import { client } from '../../../src/repositories/db';
 
  
 describe(BLOGS_PATH, () => {
@@ -108,7 +104,7 @@ describe(BLOGS_PATH, () => {
             expect(response.body.items.length).toBeGreaterThanOrEqual(2);
     });
 
-    afterAll((done) => {
-        done();  
+    afterAll(async () => {
+        await client.close();
     })
 });

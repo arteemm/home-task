@@ -1,4 +1,3 @@
-import { v4 as uuid } from 'uuid';
 import { add } from 'date-fns';
 
 export class User {
@@ -20,7 +19,7 @@ export class User {
         this.passwordSalt = salt;
         this.createdAt = new Date().toISOString();
         this.emailConfirmation = {
-            condirmationCode: uuid(),
+            condirmationCode: crypto.randomUUID(),
             expirationDate: add(new Date(), {
                 hours: 1,
                 // minutes: 1,
