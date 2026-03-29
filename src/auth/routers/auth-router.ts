@@ -74,7 +74,7 @@ authRouter.post(
 authRouter.post(
     '/new-password',
     newPasswordValidation,
-    checkCodeExistence,
     rateLimitMiddleware,
+    checkCodeExistence,
     authController.newPasswordConfirmation.bind(authController)
 );
