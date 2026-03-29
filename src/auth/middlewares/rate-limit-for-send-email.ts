@@ -5,12 +5,12 @@ import { rateLimitRepository } from '../repositories/rate.limit.repositories';
 import { add, compareAsc } from 'date-fns';
 
 
-export async function rateLimitMiddleware (req: Request, res: Response, next: NextFunction) {
+export async function rateLimitForSendEmailMiddleware (req: Request, res: Response, next: NextFunction) {
     const sessionDto: RateLimitData =  {
         ip: req.ip || 'lol',
         URL: req.originalUrl,
         date: add(new Date(), {
-                seconds: 11
+                seconds: 20
             
              }),
     };
