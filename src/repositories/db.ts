@@ -8,6 +8,7 @@ import { SecurityDevicesDBtype } from '../securityDevices/types/securityDevicesD
 import { RateLimitDataList } from '../auth/types/rate-limt-data';
 import { appConfig } from '../core/config/config';
 
+
 const mongoURI = appConfig.MONGO_URL || 'mongodb://0.0.0.0:27017';
 const dbName = 'home-task';
 export const client = new MongoClient(mongoURI);

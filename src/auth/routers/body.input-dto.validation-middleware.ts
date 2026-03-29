@@ -25,7 +25,7 @@ const newPasswordStringValidation = body('newPassword')
     .withMessage(API_ERRORS.newPassword.NOT_FIND.message)
     .isString()
     .withMessage(API_ERRORS.newPassword.NOT_A_STRING.message)
-    .isLength({ min: 1, max: 5000})
+    .isLength({ min: 6, max: 20})
     .withMessage(API_ERRORS.newPassword.IS_TOO_LONG.message);
 
 const codeValitadion = body('code')
@@ -40,7 +40,7 @@ const emailValidation = body('email')
     .isString()
     .withMessage(API_ERRORS.email.NOT_A_STRING.message)
     .matches(/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/)
-    .withMessage(API_ERRORS.login.NOT_CORRECT.message)
+    .withMessage(API_ERRORS.email.NOT_CORRECT.message)
 
 const recoveryCodeValitadion = body('recoveryCode')
     .notEmpty()

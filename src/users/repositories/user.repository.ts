@@ -73,6 +73,7 @@ export class UsersRepository {
         const matchesResalt = await this.usersCollection.updateOne({_id: new ObjectId(id)}, { $set: {
                     'passwordRecovery.recoveryCode': code,
                     'passwordRecovery.recoveryExpirationDate': expirationDate,
+                    'passwordRecovery.isRecovered': false
                 }});
 
         if (matchesResalt.matchedCount < 1) {
