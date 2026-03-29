@@ -186,23 +186,12 @@ export class AuthController {
             const { newPassword, recoveryCode } = req.body;
             const responce = await this.authService.newPasswordConfirmation(newPassword, recoveryCode);
         
-            const limitId = Buffer.from(req.ip + '/auth/password-recovery').toString('base64');
-            await rateLimitRepository.deleteAllActivities(limitId);
+            const limitIdPasswordRecovery = Buffer.from(req.ip + '/auth/password-recovery').toString('base64');
+            const limitIdNewPassword = Buffer.from(req.ip + req.originalUrl).toString('base64');
+            await rateLimitRepository.deleteAllActivities(limitIdPasswordRecovery);
+            await rateLimitRepository.deleteAllActivities(limitIdNewPassword);
             return res.sendStatus(HttpResponceCodes.NO_CONTENT_204);
         } catch(e: unknown) {
-            const err = e as { message: string };
-                if (err?.message === 'user is not exist') {
-                return res.status(HttpResponceCodes.BAD_REQUEST_400).send({errorsMessages: [ API_ERRORS.recoveryCode.NOT_FIND ]});
-            }
-
-            if (err?.message === 'expired code') {
-                return res.status(HttpResponceCodes.BAD_REQUEST_400).send({errorsMessages: [ API_ERRORS.recoveryCode.EXPIRED ]});
-            }
-
-            if (err?.message === 'user has already been applied') {
-                return res.status(HttpResponceCodes.BAD_REQUEST_400).send({errorsMessages: [ API_ERRORS.recoveryCode.APPLIED ]});
-            }
-
             throw new Error('some error in create user handler');
         }
     };
