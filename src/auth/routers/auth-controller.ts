@@ -173,8 +173,6 @@ export class AuthController {
             const { email } = req.body;
             const responce = await this.authService.passwordRecovery(email);
 
-            const limitId = Buffer.from(req.ip + req.originalUrl).toString('base64');
-            await rateLimitRepository.deleteAllActivities(limitId);
             return res.sendStatus(HttpResponceCodes.NO_CONTENT_204);
         } catch(e: unknown) {
             console.error(e)
@@ -188,7 +186,7 @@ export class AuthController {
             const { newPassword, recoveryCode } = req.body;
             const responce = await this.authService.newPasswordConfirmation(newPassword, recoveryCode);
         
-            const limitId = Buffer.from(req.ip + req.originalUrl).toString('base64');
+            const limitId = Buffer.from(req.ip + '/auth/password-recovery').toString('base64');
             await rateLimitRepository.deleteAllActivities(limitId);
             return res.sendStatus(HttpResponceCodes.NO_CONTENT_204);
         } catch(e: unknown) {
