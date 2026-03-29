@@ -9,7 +9,10 @@ export async function rateLimitMiddleware (req: Request, res: Response, next: Ne
     const sessionDto: RateLimitData =  {
         ip: req.ip || 'lol',
         URL: req.originalUrl,
-        date: new Date(),
+        date: add(new Date(), {
+                seconds: 11
+            
+             }),
     };
 
     const limitId = Buffer.from(sessionDto.ip + sessionDto.URL).toString('base64');
@@ -23,12 +26,8 @@ export async function rateLimitMiddleware (req: Request, res: Response, next: Ne
 
     const listLimits = await rateLimitRepository.updateLastActiveDate(limitId, sessionDto);
 
-    const comparisonDate = add(new Date(), {
-                seconds: -15.5
-            
-             });
     
-    const filter = listLimits?.rateLimits.filter((item: RateLimitData) => compareAsc(item.date, comparisonDate) > 0) as RateLimitData[];
+    const filter = listLimits?.rateLimits.filter((item: RateLimitData) => compareAsc(item.date, new Date()) > 0) as RateLimitData[];
 
     if (filter.length > 5) {
         return res.sendStatus(HttpResponceCodes.TOO_MANY_REQUESTS_429);
