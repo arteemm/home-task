@@ -10,7 +10,7 @@ export async function rateLimitMiddleware (req: Request, res: Response, next: Ne
         ip: req.ip || 'lol',
         URL: req.originalUrl,
         date: add(new Date(), {
-                seconds: 10
+                seconds: 11
             
              }),
     };
