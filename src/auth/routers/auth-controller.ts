@@ -194,15 +194,15 @@ export class AuthController {
         } catch(e: unknown) {
             const err = e as { message: string };
                 if (err?.message === 'user is not exist') {
-                return res.status(HttpResponceCodes.BAD_REQUEST_400).send({errorsMessages: [ API_ERRORS.code.NOT_FIND ]});
+                return res.status(HttpResponceCodes.BAD_REQUEST_400).send({errorsMessages: [ API_ERRORS.recoveryCode.NOT_FIND ]});
             }
 
             if (err?.message === 'expired code') {
-                return res.status(HttpResponceCodes.BAD_REQUEST_400).send({errorsMessages: [ API_ERRORS.code.EXPIRED ]});
+                return res.status(HttpResponceCodes.BAD_REQUEST_400).send({errorsMessages: [ API_ERRORS.recoveryCode.EXPIRED ]});
             }
 
             if (err?.message === 'user has already been applied') {
-                return res.status(HttpResponceCodes.BAD_REQUEST_400).send({errorsMessages: [ API_ERRORS.code.APPLIED ]});
+                return res.status(HttpResponceCodes.BAD_REQUEST_400).send({errorsMessages: [ API_ERRORS.recoveryCode.APPLIED ]});
             }
 
             throw new Error('some error in create user handler');
