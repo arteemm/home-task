@@ -24,7 +24,7 @@ export async function rateLimitMiddleware (req: Request, res: Response, next: Ne
     const listLimits = await rateLimitRepository.updateLastActiveDate(limitId, sessionDto);
 
     const comparisonDate = add(new Date(), {
-                seconds: -16.5
+                seconds: -16.7
             
              });
     
