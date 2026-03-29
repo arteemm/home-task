@@ -2,12 +2,14 @@ import { SecurityDevicesRepository } from '../repositories/securityDevices.repos
 import { securityDevicesQueryRepository } from '../repositories/securityDevices.query.repository';
 import { SecurityDevicesDBtype, CurrentSessions } from '../types/securityDevicesDBtype';
 import { JwtService } from '../../auth/adapters/jwt.service';
+import { inject, injectable } from 'inversify';
 
 
+@injectable()
 export class SecurityDevicesService {
     constructor(
-        protected securityDevicesRepository: SecurityDevicesRepository,
-        protected jwtService: JwtService
+        @inject(SecurityDevicesRepository) protected securityDevicesRepository: SecurityDevicesRepository,
+        @inject(JwtService) protected jwtService: JwtService
     ) {}
 
     async createSession(userId: string, data: CurrentSessions) {

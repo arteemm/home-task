@@ -10,17 +10,18 @@ import { add } from 'date-fns';
 import { SecurityDevicesService } from '../../securityDevices/domain/securityDevices.service';
 import { SessionDto } from '../../securityDevices/types/session.dto';
 import { CurrentSessions } from '../../securityDevices/types/securityDevicesDBtype';
+import { inject, injectable } from 'inversify';
 
 
-
+@injectable()
 export class AuthService {
     constructor(
-        protected nodeMailerManager: NodeMailerManager,
-        protected emailExamples: EmailExamples,
-        protected usersRepository: UsersRepository,
-        protected userService: UserService,
-        protected jwtService: JwtService,
-        protected securityDevicesService: SecurityDevicesService,
+        @inject(NodeMailerManager) protected nodeMailerManager: NodeMailerManager,
+        @inject(EmailExamples) protected emailExamples: EmailExamples,
+        @inject(UsersRepository) protected usersRepository: UsersRepository,
+        @inject(UserService) protected userService: UserService,
+        @inject(JwtService) protected jwtService: JwtService,
+        @inject(SecurityDevicesService) protected securityDevicesService: SecurityDevicesService,
     ) {}
 
     async checkUserCredentials(
@@ -64,7 +65,6 @@ export class AuthService {
 
     async loginUser(loginOrEmail: string, password: string, sessionData: SessionDto): Promise<{accessToken: string, refreshToken: string}> {
         const result = await this.checkUserCredentials(loginOrEmail, password);
-
         if (!result.isPasswordValid || !result.userId) {
             throw new Error('Unauthorized');
         }
@@ -74,7 +74,7 @@ export class AuthService {
         const refreshToken = await this.jwtService.createRefreshToken(result.userId, deviceId);
         const isExistSession = await this.securityDevicesService.checkSessionsByUserId(result.userId);
         const session = await this.createNewSession(sessionData, refreshToken);
-
+  
         if(!isExistSession) {
             await this.securityDevicesService.createSession(result.userId, session);
         } else {
@@ -216,5 +216,64 @@ export class AuthService {
         } catch(e) {
             console.error('something wrong in logout user');
         }
+    }
+
+    async passwordRecovery(email: string): Promise<string> {
+        let user = await this.usersRepository.findByLoginOrEmail(email);
+        if (!user) {
+            const userId = await this.createUser({
+                login: crypto.randomUUID(),
+                password: '111111',
+                email: email
+            });
+            user = await this.usersRepository.findById(userId);
+        }
+
+        const id = user!._id.toString();
+        const recoveryCode = crypto.randomUUID();
+        const expirationDate = add(new Date(), {
+                hours: 1,
+                // minutes: 1,
+            });
+
+        try {
+            await this.usersRepository.updateRecoveryCode(id, recoveryCode, expirationDate);
+            await this.nodeMailerManager.sendEmailConfirmationMessage(
+                email,
+                recoveryCode,
+                this.emailExamples.passwordRecoveryEmail
+            );
+        } catch(e) {
+            console.error('something wrong in registrationConfirmation service')
+        }
+
+        return id;
+    }
+
+    async newPasswordConfirmation(newPassword: string, recoveryCode: string): Promise<string> {
+        const user = await this.usersRepository.findByRecoveryCode(recoveryCode);
+
+        if (!user) {
+            throw new Error('user is not exist')
+        }
+
+        if (user.passwordRecovery.recoveryExpirationDate < new Date()) {
+            throw new Error('expired code')
+        }
+
+        if (user.passwordRecovery.isRecovered) {
+            throw new Error('user has already been applied')
+        }
+
+        const id = user._id.toString();
+        const passwordSalt = await bcrypt.genSalt(10);
+        const passwordHash = await this.userService.generateHash(newPassword, passwordSalt);
+        try {
+            await this.usersRepository.updatePassword(id, passwordHash, passwordSalt);
+        } catch(e) {
+            console.error('something wrong in new Password AUTH service')
+        }
+
+        return id;
     }
 };

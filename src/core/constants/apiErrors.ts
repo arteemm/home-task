@@ -37,6 +37,7 @@ enum PropsName {
     content = 'content',
     loginOrEmail = 'loginOrEmail',
     password = 'password',
+    newPassword = 'newPassword',
 };
 
 interface SimpleErrorObj  {
@@ -56,6 +57,7 @@ type OtherErrorsType = {
     login: SimpleErrorObj & { NOT_CORRECT: ErrorMessage, MUST_BE_UNIQUE: ErrorMessage },
     email: Omit<SimpleErrorObj, 'IS_TOO_LONG'> & { NOT_CORRECT: ErrorMessage, MUST_BE_UNIQUE: ErrorMessage, APPLIED: ErrorMessage },
     code: Omit<SimpleErrorObj, 'IS_TOO_LONG'> & { EXPIRED: ErrorMessage, APPLIED: ErrorMessage},
+    recoveryCode: Omit<SimpleErrorObj, 'IS_TOO_LONG'> & { EXPIRED: ErrorMessage, APPLIED: ErrorMessage},
 };
 
 export type  ApiErrorsType = SimpleErrorsType & OtherErrorsType;
@@ -140,7 +142,18 @@ export const API_ERRORS:  ApiErrorsType = {
         NOT_A_STRING: getNotStringMessage('code'),
         EXPIRED: getNotCorrectMessage('code has been expired ', 'code'),
         APPLIED: getNotCorrectMessage('user has already been applied ', 'code'),
-    }  
+    },
+    recoveryCode: {
+        NOT_FIND: getNotStringMessage('recoveryCode'),
+        NOT_A_STRING: getNotStringMessage('recoveryCode'),
+        EXPIRED: getNotCorrectMessage('recoveryCode has been expired ', 'recoveryCode'),
+        APPLIED: getNotCorrectMessage('user has already been applied ', 'recoveryCode'),
+    },
+    newPassword: {
+        NOT_A_STRING: getNotStringMessage('newPassword'),
+        NOT_FIND: getNotFindMessage('newPassword'),
+        IS_TOO_LONG: getNotCorrectMessage('length must be more than 6 and less than 20 symbols', 'newPassword'),
+    },
 };
 
 

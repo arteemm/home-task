@@ -1,12 +1,13 @@
 import express, { Router } from 'express';
-import { createUser } from './handlers/create-user-handler';
-import { getUserListHandler } from './handlers/get-user-list.handler';
-import { deleteUser } from './handlers/delete-user-handler';
 import { checkAuthorizationMiddlewares } from '../../auth/middlewares/check-authorization-middleware';
 import { createUserValidation } from './body.input-dto.validation-middleware';
 import { paginationAndSortingValidation } from '../../core/middlewares/query-pagination-sorting.validation-middleware';
 import { UserSortField } from './input/user-sort-field';
+import { container } from '../../ioc/composition-root';
+import { UserController } from './user-controller';
 
+
+const userController = container.resolve(UserController)
 
 export const usersRouter: express.Router = Router({});
 
@@ -14,18 +15,18 @@ usersRouter.get(
     '/',
     checkAuthorizationMiddlewares,
     paginationAndSortingValidation(UserSortField),
-    getUserListHandler
+    userController.getUserListHandler.bind(userController)
 )
 
 usersRouter.post(
     '/',
     checkAuthorizationMiddlewares,
     createUserValidation,
-    createUser
+    userController.createUser.bind(userController)
 );
 
 usersRouter.delete(
     '/:id',
     checkAuthorizationMiddlewares,
-    deleteUser
+    userController.deleteUser.bind(userController)
 );

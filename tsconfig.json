@@ -2,6 +2,7 @@
   "compilerOptions": {
     "target": "es2016",
     "module": "CommonJS",
+    "moduleResolution": "node",
     "rootDir": "./src",
     "outDir": "./dist",
     "strict": true,
@@ -10,6 +11,12 @@
     "allowSyntheticDefaultImports": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    // "baseUrl": ".",
+    //     "paths": {
+    //   "inversify": ["node_modules/inversify/lib"]
+    // }
   },
   "include": ["src/**/*"],
   "exclude": ["__tests__", "dist", "node_modules"],

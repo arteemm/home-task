@@ -1,8 +1,10 @@
 
 import { createTransport } from 'nodemailer';
 import { appConfig } from '../../core/config/config';
+import { inject, injectable } from 'inversify';
 
 
+@injectable()
 export class NodeMailerManager {
     async sendEmailConfirmationMessage(
         email: string,
