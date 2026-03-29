@@ -9,6 +9,7 @@ import { createUserValidation } from '../../users/routers/body.input-dto.validat
 import { accessTokenAutorizationMiddleware } from '../middlewares/access-token-autorization-middleware';
 import { refreshTokenAutorizationMiddleware } from '../middlewares/refresh-token-autorization-middleware';
 import { rateLimitMiddleware } from '../middlewares/rate-limit-middleware';
+import { rateLimitForSendEmailMiddleware } from '../middlewares/rate-limit-for-send-email';
 import { container } from '../../ioc/composition-root';
 import { AuthController } from './auth-controller';
 import { checkCodeExistence } from '../middlewares/check-code-existence';
@@ -67,7 +68,7 @@ authRouter.post(
 authRouter.post(
     '/password-recovery',
     resendingEmailValidation,
-    rateLimitMiddleware,
+    rateLimitForSendEmailMiddleware,
     authController.passwordRecovery.bind(authController)
 );
 
