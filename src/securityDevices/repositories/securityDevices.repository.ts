@@ -1,10 +1,13 @@
 import { SecurityDevicesDBtype, CurrentSessions } from '../types/securityDevicesDBtype';
 import { WithId, ObjectId, Collection } from 'mongodb';
 import { API_ERRORS } from '../../core/constants/apiErrors';
+import { inject, injectable } from 'inversify';
+import { TYPES } from '../../ioc/types';
 
 
+@injectable()
 export class SecurityDevicesRepository {
-    constructor(private securityDevicesCollection: Collection<SecurityDevicesDBtype>) {}
+    constructor(@inject(TYPES.SecurityDevicesCollection) private securityDevicesCollection: Collection<SecurityDevicesDBtype>) {}
 
     async createSession(newEntity: SecurityDevicesDBtype): Promise<string> {
         const insertResalt = await this.securityDevicesCollection.insertOne(newEntity);

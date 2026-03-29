@@ -22,9 +22,11 @@
     "date-fns": "^4.1.0",
     "express": "^5.2.1",
     "express-validator": "^7.3.1",
+    "inversify": "6",
     "jsonwebtoken": "^9.0.3",
     "mongodb": "^7.1.0",
-    "nodemailer": "^8.0.2"
+    "nodemailer": "^8.0.2",
+    "reflect-metadata": "^0.2.2"
   },
   "devDependencies": {
     "@types/cookie-parser": "^1.4.10",

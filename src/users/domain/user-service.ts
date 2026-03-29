@@ -2,11 +2,13 @@ import { User } from './user.entity';
 import { CreateUserDto } from '../types/create-user-dto';
 import { UsersRepository } from '../repositories/user.repository';
 import bcrypt from 'bcrypt';
+import { inject, injectable } from 'inversify';
 
 
+@injectable()
 export class UserService {
     constructor(
-        protected usersRepository: UsersRepository
+        @inject(UsersRepository) protected usersRepository: UsersRepository
     ) {}
 
     async createUser(dto: CreateUserDto): Promise<string> {

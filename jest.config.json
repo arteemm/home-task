@@ -2,8 +2,5 @@
   "preset": "ts-jest",
   "testEnvironment": "node",
   "moduleFileExtensions": ["ts", "js", "json", "node"],
-  "testMatch" : ["**/__tests__/**/*.test.ts"],
-  "transformIgnorePatterns": [
-    "node_modules/(?!(uuid)/)"
-  ]
+  "testMatch" : ["**/__tests__/**/*.test.ts"]
 }

@@ -1,10 +1,14 @@
 import { Request, Response } from 'express';
-import { securityDevicesService } from '../../../composition-root';
+import { SecurityDevicesService } from '../../domain/securityDevices.service';
 import { HttpResponceCodes } from '../../../core/constants/responseCodes';
 import { SecurityDevicesViewModel } from '../../types/securityDevices-view-model';
 import { securityDevicesQueryRepository } from '../../repositories/securityDevices.query.repository';
-import { jwtService } from '../../../composition-root';
+import { JwtService } from '../../../auth/adapters/jwt.service';
+import { container } from '../../../ioc/composition-root';
 
+
+const securityDevicesService: SecurityDevicesService = container.resolve(SecurityDevicesService);
+const jwtService: JwtService = container.resolve(JwtService);
 
 export async function deleteSessionByDeviceIdHandler(req: Request, res: Response<SecurityDevicesViewModel[]>) {
     const userId = req.userId as string;

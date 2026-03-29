@@ -1,7 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
-import { jwtService } from '../../composition-root';
+import { JwtService } from '../adapters/jwt.service';
 import { HttpResponceCodes } from '../../core/constants/responseCodes';
+import { container } from '../../ioc/composition-root';
 
+
+const jwtService: JwtService = container.resolve(JwtService)
 
 export async function refreshTokenAutorizationMiddleware (req: Request, res: Response, next: NextFunction) {
     const refreshToken = req.cookies.refreshToken;

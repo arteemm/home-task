@@ -1,8 +1,11 @@
 import { Request, Response } from 'express';
-import { securityDevicesService } from '../../../composition-root';
+import { SecurityDevicesService } from '../../domain/securityDevices.service';
 import { HttpResponceCodes } from '../../../core/constants/responseCodes';
 import { SecurityDevicesViewModel } from '../../types/securityDevices-view-model';
+import { container } from '../../../ioc/composition-root';
 
+
+const securityDevicesService: SecurityDevicesService = container.resolve(SecurityDevicesService);
 
 export async function deleteAllSessionsExceptCurrentlyHandler(req: Request, res: Response<SecurityDevicesViewModel[]>) {
     const userId = req.userId as string;

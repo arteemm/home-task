@@ -11,6 +11,7 @@ import { add } from 'date-fns';
 import { SecurityDevicesRepository }  from '../../../src/securityDevices/repositories/securityDevices.repository';
 import { SecurityDevicesService }  from '../../../src/securityDevices/domain/securityDevices.service';
 import { SecurityDevicesDBtype }  from '../../../src/securityDevices/types/securityDevicesDBtype';
+import { WithId } from 'mongodb';
 
 
 describe('integration test for AuthService', () => {
@@ -121,7 +122,7 @@ describe('integration test for AuthService', () => {
         const correctcondirmationCode2 = 'goodcode';
         const incorrectcondirmationCode = 'lololo';
 
-        const createUser = (condirmationCode: string, expirationDate: Date, ) => {
+        const createUser = (condirmationCode: string, expirationDate: Date, ): IUserDB => {
             return {
                     userName: 'login',
                     email: 'email@mail.ru',
@@ -132,6 +133,11 @@ describe('integration test for AuthService', () => {
                         condirmationCode: condirmationCode,
                         expirationDate: expirationDate,
                         isConfirmed: false,
+                    },
+                    passwordRecovery: {
+                        recoveryCode: '111',
+                        recoveryExpirationDate: new Date(),
+                        isRecovered: false
                     }
                 }
         };
@@ -250,4 +256,100 @@ describe('integration test for AuthService', () => {
         });
     });
 
+    describe('change Password', () => {
+        beforeAll(async () => {
+            await db.dropDatabase();
+        })
+
+        const correctcondirmationCode1 = crypto.randomUUID();
+        const correctcondirmationCode2 = crypto.randomUUID();
+        const incorrectcondirmationCode = 'lololo';
+        const newPassword = '123456a';
+        const newPassword2 = '987654321a';
+        let userModel:WithId<IUserDB> | null;
+
+        const createUser = (condirmationCode: string, expirationDate: Date, ): IUserDB => {
+            return {
+                    userName: 'login',
+                    email: 'email@mail.ru',
+                    passwordHash: 'hash',
+                    passwordSalt: 'salt',
+                    createdAt: new Date().toISOString(),
+                    emailConfirmation: {
+                        condirmationCode: 'condirmationCode',
+                        expirationDate: new Date(),
+                        isConfirmed: false,
+                    },
+                    passwordRecovery: {
+                        recoveryCode: condirmationCode,
+                        recoveryExpirationDate: expirationDate,
+                        isRecovered: false
+                    }
+                }
+        };
+
+        it('should return false for expired confirmatin code', async () => {
+            const user = createUser(correctcondirmationCode1, add(new Date(), { minutes: -1 }));
+            await usersCollection.insertMany([ user ]);
+            const spy = jest.spyOn(usersRepository, 'updatePassword');
+
+            try {
+                const result = await authService.newPasswordConfirmation(newPassword, correctcondirmationCode1) as string;                
+            } catch(e) {
+                expect(spy).not.toHaveBeenCalled()
+
+                userModel = await usersCollection.findOne({email: user.email});
+
+                expect(userModel?.passwordRecovery.isRecovered).toBeFalsy();
+
+                const err = e as {message: string}
+                expect(err.message).toBe('expired code');
+            }
+        });
+
+        it('should return false for not exist confirmatin code', async () => {
+            try {
+               await authService.newPasswordConfirmation(newPassword, incorrectcondirmationCode);
+            } catch(e) {
+                const err = e as {message: string}
+                expect(err.message).toBe('user is not exist');
+            }
+        });
+
+        it('should return true for not expired and existing confirmatin code', async () => {
+             await usersCollection.updateOne({_id: userModel!._id},
+                {$set: {
+                    'passwordRecovery.recoveryCode': correctcondirmationCode2,
+                    'passwordRecovery.recoveryExpirationDate': add(new Date(), { minutes: 10 })
+                }}
+            );
+
+            try {
+                const result = await authService.newPasswordConfirmation(newPassword2, correctcondirmationCode2) as string;
+                const userModel = await usersCollection.findOne({_id: new ObjectId(result)});
+
+                expect(userModel?.passwordRecovery.isRecovered).toBeTruthy();
+
+            } catch(e) {
+                const err = e as {message: string}
+                console.error(e);
+                throw new Error('SOMETHING wrong in password recovery Confirmation')
+            }
+
+            try {
+                await authService.loginUser(userModel!.userName, 'wrongPassword', {ip: '::1', title: 'testTitle', originalUrl: 'http.com'});
+            } catch(e) {
+                const err = e as {message: string}
+                expect(err.message).toBe('Unauthorized');
+            }
+
+            const result = await authService.loginUser(userModel!.userName, newPassword2, {ip: '::1', title: 'testTitle', originalUrl: 'http.com'});
+            expect(result).toEqual({
+                accessToken: expect.any(String),
+                refreshToken: expect.any(String),
+            })
+
+        });
+
+    });
 });

@@ -1,16 +1,24 @@
 import jwt from 'jsonwebtoken';
 import { appConfig } from '../../core/config/config';
 import { add } from 'date-fns';
+import { inject, injectable } from 'inversify';
 
+
+@injectable()
 export class JwtService {
     async createAccessToken(userId: string) {
-        const iat = add(new Date(), { hours: 1}); // minutes: 1 });
-        const token = jwt.sign({userId: userId, date: Date.now()}, appConfig.SECRET_KEY, { expiresIn: `1h`})
+        const token = jwt.sign({userId: userId, date: Date.now()}, appConfig.SECRET_KEY, {
+            expiresIn: '10s'
+            // expiresIn: `1h`
+        })
         return token;
     }
 
     async createRefreshToken(userId: string, deviceId: string) {
-        const token = jwt.sign({userId: userId, deviceId: deviceId, date: Date.now()}, appConfig.SECRET_KEY, { expiresIn: `24h`})
+        const token = jwt.sign({userId: userId, deviceId: deviceId, date: Date.now()}, appConfig.SECRET_KEY, {
+            expiresIn: '20s'
+            // expiresIn: `24h`
+        })
         return token;
     }
     
