@@ -253,19 +253,7 @@ export class AuthService {
     async newPasswordConfirmation(newPassword: string, recoveryCode: string): Promise<string> {
         const user = await this.usersRepository.findByRecoveryCode(recoveryCode);
 
-        if (!user) {
-            throw new Error('user is not exist')
-        }
-
-        if (user.passwordRecovery.recoveryExpirationDate < new Date()) {
-            throw new Error('expired code')
-        }
-
-        if (user.passwordRecovery.isRecovered) {
-            throw new Error('user has already been applied')
-        }
-
-        const id = user._id.toString();
+        const id = user!._id.toString();
         const passwordSalt = await bcrypt.genSalt(10);
         const passwordHash = await this.userService.generateHash(newPassword, passwordSalt);
         try {

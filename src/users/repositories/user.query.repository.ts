@@ -50,6 +50,10 @@ export const usersQueryRepository = {
         return userDB ? this._mapToUserViewModel(userDB) : null;
     },
 
+    async findByRecoveryCode (code: string): Promise<WithId<IUserDB> | null>{
+        return usersCollection.findOne({ 'passwordRecovery.recoveryCode': code });
+    },
+
     _mapToUserViewModel(data: WithId<IUserDB>): UserViewModel {
         return {
             id: data._id.toString(),

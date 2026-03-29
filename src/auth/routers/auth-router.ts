@@ -11,6 +11,8 @@ import { refreshTokenAutorizationMiddleware } from '../middlewares/refresh-token
 import { rateLimitMiddleware } from '../middlewares/rate-limit-middleware';
 import { container } from '../../ioc/composition-root';
 import { AuthController } from './auth-controller';
+import { checkCodeExistence } from '../middlewares/check-code-existence';
+
 
 const authController: AuthController = container.resolve(AuthController)
 
@@ -72,6 +74,7 @@ authRouter.post(
 authRouter.post(
     '/new-password',
     newPasswordValidation,
+    checkCodeExistence,
     rateLimitMiddleware,
     authController.newPasswordConfirmation.bind(authController)
 );
