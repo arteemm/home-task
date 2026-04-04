@@ -5,21 +5,30 @@ import { UserService } from '../../../src/users/domain/user-service';
 import { NodeMailerManager } from '../../../src/auth/adapters/nodeMailer-manager';
 import { EmailExamples } from '../../../src/auth/adapters/emailExamples';
 import { MongoMemoryServer } from 'mongodb-memory-server-global-4.4';
-import { MongoClient, Db, Collection, ObjectId,  } from 'mongodb';
+// import { MongoClient, Db, Collection, ObjectId,  } from 'mongodb';
+
+import { RateLimitModel } from '../../../src/auth/infrastructure/mongoose/rate.limit.shema';
+import { BlogModel } from '../../../src/blogs/infrastructure/mongoose/blog.shema';
+import { CommentModel } from '../../../src/comments/infrastructure/mongoose/comment.shema';
+import { PostModel } from '../../../src/posts/infrastructure/mongoose/post.shema';
+import { SecurityDevicesModel } from '../../../src/securityDevices/infrastructure/mongoose/security.devices.shema';
+import { UserModel } from '../../../src/users/infrastructure/mongoose/user.shema';
+
+import mongoose, { Mongoose } from 'mongoose';
 import { IUserDB } from '../../../src/users/types/userDBInterface';
 import { add } from 'date-fns';
 import { SecurityDevicesRepository }  from '../../../src/securityDevices/repositories/securityDevices.repository';
 import { SecurityDevicesService }  from '../../../src/securityDevices/domain/securityDevices.service';
-import { SecurityDevicesDBtype }  from '../../../src/securityDevices/types/securityDevicesDBtype';
+import { ISecurityDevicesDB }  from '../../../src/securityDevices/types/securityDevicesDBinterface';
 import { WithId } from 'mongodb';
 
 
 describe('integration test for AuthService', () => {
     let mongoServer: MongoMemoryServer;
-    let client: MongoClient;
-    let db: Db;
-    let usersCollection: Collection<IUserDB>;
-    let securityDevicesCollection: Collection<SecurityDevicesDBtype>;
+    let client: Mongoose;
+    // let db: Db;
+    // let usersCollection: Collection<IUserDB>;
+    // let securityDevicesCollection: Collection<SecurityDevicesDBtype>;
     let usersRepository: UsersRepository;
     let userService: UserService;
     let nodeMailerManagerMock: jest.Mocked<NodeMailerManager>;
@@ -32,18 +41,14 @@ describe('integration test for AuthService', () => {
     beforeAll(async () => {
         mongoServer = await MongoMemoryServer.create();
         const mongoUri = mongoServer.getUri();
-        client = new MongoClient(mongoUri);
-        db = client.db('test')
-        usersCollection = db.collection<IUserDB>('users');
-        securityDevicesCollection = db.collection<SecurityDevicesDBtype>('security-devices');
-        await client.connect();
+        client = await mongoose.connect(mongoUri);
 
         emailExamples = new EmailExamples();
         jwtService = new JwtService();
 
-        usersRepository = new UsersRepository(usersCollection);
+        usersRepository = new UsersRepository();
         userService = new UserService(usersRepository);
-        securityDevicesRepository = new SecurityDevicesRepository(securityDevicesCollection);
+        securityDevicesRepository = new SecurityDevicesRepository();
         securityDevicesService = new SecurityDevicesService(securityDevicesRepository, jwtService);
         nodeMailerManagerMock = {
             sendEmailConfirmationMessage: jest.fn()

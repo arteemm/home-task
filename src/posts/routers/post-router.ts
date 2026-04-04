@@ -1,11 +1,4 @@
 import express, { Router } from 'express';
-import { getPostListHandler } from './handlers/get-post-list.handler';
-import { getPostByIdHandler } from './handlers/get-post.handler';
-import { getCommentListHandler } from './handlers/get-comments-list-in-post';
-import { createPostsHandler } from './handlers/create-post.handler';
-import { updatePostHandler } from './handlers/update-post.handler';
-import { deletePostHandler } from './handlers/delete-post.handler';
-import { createCommentInPostsHandler } from './handlers/create-comment-in-post';
 import { createPostValidation, updatePostValidation } from './body.input-dto.validation-middleware';
 import { createCommentValidation } from '../../comments/routers/body.input-dto.validation-middleware';
 import { checkAuthorizationMiddlewares } from '../../auth/middlewares/check-authorization-middleware';
@@ -14,34 +7,38 @@ import { paginationAndSortingValidation } from '../../core/middlewares/query-pag
 import { PostSortField } from './input/post-sort-field';
 import { CommentSortField } from '../../comments/routers/input/comment-sort-field';
 import { checkExistPostByIdMiddleware } from './middlewares/check-exist-post-by-Id.middleware';
+import { container } from '../../ioc/composition-root';
+import { PostsController } from './posts-controller';
 
+
+const postsController = container.resolve(PostsController);
 
 export const postsRouter: express.Router = Router({});
 
 postsRouter.get(
   "/",
   paginationAndSortingValidation(PostSortField),
-  getPostListHandler
+  postsController.getPostListHandler.bind(postsController)
 );
 
 postsRouter.get(
   "/:id",
   checkExistPostByIdMiddleware,
-  getPostByIdHandler
+  postsController.getPostByIdHandler.bind(postsController)
 );
 
 postsRouter.get(
   "/:id/comments",
   paginationAndSortingValidation(CommentSortField),
   checkExistPostByIdMiddleware,
-  getCommentListHandler
+  postsController.getCommentListHandler.bind(postsController)
 );
 
 postsRouter.post(
   "/",
   checkAuthorizationMiddlewares,
   createPostValidation,
-  createPostsHandler
+  postsController.createPostsHandler.bind(postsController)
 );
 
 postsRouter.post(
@@ -49,7 +46,7 @@ postsRouter.post(
   accessTokenAutorizationMiddleware,
   checkExistPostByIdMiddleware,
   createCommentValidation,
-  createCommentInPostsHandler
+  postsController.createCommentInPostsHandler.bind(postsController)
 );
  
 postsRouter.put(
@@ -57,14 +54,14 @@ postsRouter.put(
   checkAuthorizationMiddlewares,
   checkExistPostByIdMiddleware,
   updatePostValidation,
-  updatePostHandler
+  postsController.updatePostHandler.bind(postsController)
 );
 
 postsRouter.delete(
   "/:id",
   checkAuthorizationMiddlewares,
   checkExistPostByIdMiddleware,
-  deletePostHandler
+  postsController.deletePostHandler.bind(postsController)
 );
 
 

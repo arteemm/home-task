@@ -1,21 +1,25 @@
-import { securityDevicesCollection } from '../../repositories/db';
 import { SecurityDevicesViewModel } from '../types/securityDevices-view-model';
-import { CurrentSessions } from '../types/securityDevicesDBtype';
-import { WithId } from 'mongodb';
+import { SecurityDevicesDocument, SecurityDevicesModel } from '../infrastructure/mongoose/security.devices.shema';
+import { CurrentSessions } from '../domain/security.devices.entity';
+import { inject, injectable } from 'inversify';
+import { TYPES } from '../../ioc/types';
 
 
-export const securityDevicesQueryRepository = {
+@injectable()
+export class SecurityDevicesQueryRepository {
+    constructor() {}
+    
     async findAll(userId: string): Promise<SecurityDevicesViewModel[] | null> {
-        const result = await securityDevicesCollection.findOne({userId: userId});
+        const result = await SecurityDevicesModel.findOne({userId: userId});
 
         if (!result) {
             return null;
         }
         return this._mapToListDevicesViewModel(result.currentSessions);
-    },
+    }
 
     async getSessionByDeviceId(deviceId: string): Promise<SecurityDevicesViewModel | null> {
-        const result = await securityDevicesCollection.findOne({
+        const result = await SecurityDevicesModel.findOne({
             'currentSessions.deviceId': deviceId,
         });
 
@@ -25,7 +29,7 @@ export const securityDevicesQueryRepository = {
 
         const currentSession = result.currentSessions.find((item: CurrentSessions) => item.deviceId === deviceId) as CurrentSessions;
         return this._mapTotDeviceViewModel(currentSession)
-    },
+    }
 
     _mapToListDevicesViewModel(data: CurrentSessions[]): SecurityDevicesViewModel[] {
         return data.map((item: CurrentSessions) => {
@@ -36,7 +40,7 @@ export const securityDevicesQueryRepository = {
                 deviceId: item.deviceId,
             };
         });
-    },
+    }
 
     _mapTotDeviceViewModel(data: CurrentSessions): SecurityDevicesViewModel {
         return {
@@ -45,5 +49,5 @@ export const securityDevicesQueryRepository = {
                 lastActiveDate: `${data.lastActiveDate}`,
                 deviceId: data.deviceId,
             };
-    },
+    }
 };

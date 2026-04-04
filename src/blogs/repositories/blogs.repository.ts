@@ -1,29 +1,33 @@
 import { UpdateBlogDto } from '../types/update-blog-dto';
-import { BlogDBType } from '../types/blogDBtype';
-import { blogCollection } from '../../repositories/db';
+import { BlogDocument, BlogModel } from '../infrastructure/mongoose/blog.shema';
 import { API_ERRORS } from '../../core/constants/apiErrors';
 import { ObjectId } from 'mongodb';
+import { inject, injectable } from 'inversify';
+import { TYPES } from '../../ioc/types';
 
 
-export const blogsRepository = {
-    async findById(id: string): Promise<BlogDBType | null>{
+@injectable()
+export class BlogsRepository {
+    constructor() {}
+
+    async findById(id: string): Promise<BlogDocument | null>{
         if (!ObjectId.isValid(id)) {
             return new Promise((res, rej) => {
                 res(null)
             });
         }
 
-        return blogCollection.findOne({_id: new ObjectId(id)});
-    },
+        return BlogModel.findOne({_id: new ObjectId(id)});
+    }
 
-    async create(newEntity: BlogDBType): Promise<string> {
-        const insertResalt = await blogCollection.insertOne(newEntity);
+    async create(blog: BlogDocument): Promise<string> {
+        const insertResalt = await blog.save();
 
-        return  insertResalt.insertedId.toString();
-    },
+        return  insertResalt._id.toString();
+    }
 
     async update(id: string, blogParam: UpdateBlogDto): Promise<void> {
-        const matchesResalt = await blogCollection.updateOne({_id: new ObjectId(id)}, {$set: {
+        const matchesResalt = await BlogModel.updateOne({_id: new ObjectId(id)}, {$set: {
             name: blogParam.name,
             description: blogParam.description,
             websiteUrl: blogParam.websiteUrl,
@@ -32,13 +36,13 @@ export const blogsRepository = {
         if (matchesResalt.matchedCount < 1) {
             throw new Error(API_ERRORS.id_not_exist);
         }
-    },
+    }
 
     async delete(id: string): Promise<void> {
-        const deletedBlog = await blogCollection.deleteOne({_id: new ObjectId(id)})
+        const deletedBlog = await BlogModel.deleteOne({_id: new ObjectId(id)})
 
         if (deletedBlog.deletedCount < 1) {
             throw new Error(API_ERRORS.id_not_exist);
         }
     }
-};
+}

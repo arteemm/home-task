@@ -3,11 +3,12 @@ import { WithId, ObjectId, Collection } from 'mongodb';
 import { API_ERRORS } from '../../core/constants/apiErrors';
 import { inject, injectable } from 'inversify';
 import { TYPES } from '../../ioc/types';
+import { UserModel, UserDocument } from '../infrastructure/mongoose/user.shema';
 
 
 @injectable()
 export class UsersRepository {
-    constructor(@inject(TYPES.UsersCollection) private usersCollection: Collection<IUserDB>) {}
+    // constructor(@inject(TYPES.UsersCollection) private usersCollection: Collection<UserDocument>) {}
 
     async findById(id: string): Promise<WithId<IUserDB> | null>{
             if (!ObjectId.isValid(id)) {
@@ -16,31 +17,31 @@ export class UsersRepository {
                 });
             }
 
-            return this.usersCollection.findOne({_id: new ObjectId(id)});
+            return UserModel.findOne({_id: new ObjectId(id)});
     }
 
     async findByLoginOrEmail(loginOrEmail: string): Promise<WithId<IUserDB> | null>{
-        return this.usersCollection.findOne({
+        return UserModel.findOne({
             $or: [{ userName: loginOrEmail }, { email: loginOrEmail }],
         });
     }
 
-    async create(newEntity: IUserDB): Promise<string> {
-        const insertResalt = await this.usersCollection.insertOne(newEntity);
+    async create(user: UserDocument): Promise<string> {
+        const insertResalt = await user.save();
 
-        return insertResalt.insertedId.toString();
+        return insertResalt._id.toString();
     }
 
     async findByConfirmationCode (code: string): Promise<WithId<IUserDB> | null>{
-        return this.usersCollection.findOne({ 'emailConfirmation.condirmationCode': code });
+        return UserModel.findOne({ 'emailConfirmation.condirmationCode': code });
     }
 
     async findByRecoveryCode (code: string): Promise<WithId<IUserDB> | null>{
-        return this.usersCollection.findOne({ 'passwordRecovery.recoveryCode': code });
+        return UserModel.findOne({ 'passwordRecovery.recoveryCode': code });
     }
 
     async updateConfirmationStatus(id: string): Promise<void> {
-        const matchesResalt = await this.usersCollection.updateOne(
+        const matchesResalt = await UserModel.updateOne(
             {_id: new ObjectId(id)},
             {$set: { 'emailConfirmation.isConfirmed': true }}
         );
@@ -51,7 +52,7 @@ export class UsersRepository {
     }
 
     async updateConfirmationCode(id: string, code: string, expirationDate: Date ): Promise<void> {
-        const matchesResalt = await this.usersCollection.updateOne({_id: new ObjectId(id)}, { $set: {
+        const matchesResalt = await UserModel.updateOne({_id: new ObjectId(id)}, { $set: {
                     'emailConfirmation.condirmationCode': code,
                     'emailConfirmation.expirationDate': expirationDate,
                 }});
@@ -62,7 +63,7 @@ export class UsersRepository {
     }
 
     async delete(id: string): Promise<void> {
-        const deletedBlog = await this.usersCollection.deleteOne({_id: new ObjectId(id)})
+        const deletedBlog = await UserModel.deleteOne({_id: new ObjectId(id)})
 
         if (deletedBlog.deletedCount < 1) {
             throw new Error(API_ERRORS.id_not_exist);
@@ -70,7 +71,7 @@ export class UsersRepository {
     }
 
     async updateRecoveryCode(id: string, code: string, expirationDate: Date ): Promise<void> {
-        const matchesResalt = await this.usersCollection.updateOne({_id: new ObjectId(id)}, { $set: {
+        const matchesResalt = await UserModel.updateOne({_id: new ObjectId(id)}, { $set: {
                     'passwordRecovery.recoveryCode': code,
                     'passwordRecovery.recoveryExpirationDate': expirationDate,
                     'passwordRecovery.isRecovered': false
@@ -82,7 +83,7 @@ export class UsersRepository {
     }
 
     async updatePassword(userId:string, newHash: string, newSalt: string): Promise<void> {
-        const matchesResalt = await this.usersCollection.updateOne(
+        const matchesResalt = await UserModel.updateOne(
             {_id: new ObjectId(userId)},
             {$set: {
                 'passwordHash': newHash,

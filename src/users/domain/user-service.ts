@@ -3,6 +3,7 @@ import { CreateUserDto } from '../types/create-user-dto';
 import { UsersRepository } from '../repositories/user.repository';
 import bcrypt from 'bcrypt';
 import { inject, injectable } from 'inversify';
+import { UserModel } from '../infrastructure/mongoose/user.shema';
 
 
 @injectable()
@@ -25,12 +26,9 @@ export class UserService {
             throw new Error('email is not unique')
         }
 
-        const newUser = new User(
-            dto.login,
-            dto.email,
-            passwordHash,
-            passwordSalt,
-        );
+        const newUserInstance = User.create(dto.login, dto.email, passwordHash, passwordSalt);
+
+        const newUser = new UserModel(newUserInstance);
 
         return this.usersRepository.create(newUser);
     }

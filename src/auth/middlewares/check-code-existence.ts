@@ -1,8 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
-import { usersQueryRepository } from '../../users/repositories/user.query.repository';
+import { UsersQueryRepository } from '../../users/repositories/user.query.repository';
 import { HttpResponceCodes } from '../../core/constants/responseCodes';
 import { API_ERRORS } from '../../core/constants/apiErrors';
+import { container } from '../../ioc/composition-root';
 
+
+const usersQueryRepository: UsersQueryRepository = container.resolve(UsersQueryRepository);
 
 export async function checkCodeExistence(req: Request, res: Response, next: NextFunction) {
     let code = req.body['code'];

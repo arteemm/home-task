@@ -1,12 +1,18 @@
-import { commentRepository } from '../repositories/comment.repository';
+import { CommentRepository } from '../repositories/comment.repository';
+import { inject, injectable } from 'inversify';
 
 
-export const commentsService = {
+injectable()
+export class CommentsService {
+    constructor(
+        @inject(CommentRepository) protected commentRepository: CommentRepository,
+    ) {}
+
     async update(id: string, data: { content: string }): Promise<void> {
-        return commentRepository.update(id, data);
-    },
+        return this.commentRepository.update(id, data);
+    }
 
     async delete(id: string): Promise<void> {
-        return commentRepository.delete(id);
+        return this.commentRepository.delete(id);
     }
 };

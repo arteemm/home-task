@@ -1,11 +1,15 @@
-import { PostDBType } from '../types/postDBtype';
+import { IPostDB } from '../types/postDBinterface';
 import { PostQueryInput } from '../types/post-query-input';
 import { PostViewModel } from '../types/post-view-model';
-import { postsCollection } from '../../repositories/db';
 import { WithId, ObjectId } from 'mongodb';
+import { injectable } from 'inversify';
+import { PostModel } from '../infrastructure/mongoose/post.shema';
 
 
-export const postsQueryRepository = {
+@injectable()
+export class PostsQueryRepository {
+    constructor() {}
+
     async findAll(queryDto: PostQueryInput, blogId?: string): Promise<{ items: PostViewModel[]; totalCount: number }> {
             const {
                 pageNumber,
@@ -17,16 +21,16 @@ export const postsQueryRepository = {
             const skip = (+pageNumber - 1) * +pageSize;
             const filter = blogId ? { blogId: blogId } : {};
     
-            const items = await postsCollection
+            const items = await PostModel
                 .find(filter)
                 .sort({ [sortBy]: sortDirection })
                 .skip(skip)
                 .limit(+pageSize)
-                .toArray(); 
+                .lean(); 
 
-            const totalCount = await postsCollection.countDocuments(filter);
+            const totalCount = await PostModel.countDocuments(filter);
             return { items: this._mapToListPostsViewModel(items), totalCount};
-        },
+    }
 
    async findById(id: string): Promise<PostViewModel | null>{
         if (!ObjectId.isValid(id)) {
@@ -35,12 +39,12 @@ export const postsQueryRepository = {
             });
         }
 
-        const postDB = await postsCollection.findOne({_id: new ObjectId(id)})
+        const postDB = await PostModel.findOne({_id: new ObjectId(id)})
 
         return postDB ? this._mapToPostViewModel(postDB) : null;
-    },
+    }
 
-    _mapToPostViewModel(data: WithId<PostDBType>): PostViewModel {
+    _mapToPostViewModel(data: WithId<IPostDB>): PostViewModel {
         return {
             id: data._id.toString(),
             title: data.title,
@@ -50,10 +54,10 @@ export const postsQueryRepository = {
             blogName: data.blogName,
             createdAt: data.createdAt,
         }
-    },
+    }
 
-    _mapToListPostsViewModel(data: WithId<PostDBType>[]): PostViewModel[] {
-        return data.map((item: WithId<PostDBType>) => {
+    _mapToListPostsViewModel(data: WithId<IPostDB>[]): PostViewModel[] {
+        return data.map((item: WithId<IPostDB>) => {
             return {
                 id: item._id.toString(),
                 title: item.title,
@@ -64,5 +68,5 @@ export const postsQueryRepository = {
                 createdAt: item.createdAt,
             };
         });
-    },
+    }
 };

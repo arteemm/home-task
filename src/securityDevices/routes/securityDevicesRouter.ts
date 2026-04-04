@@ -1,26 +1,27 @@
 import express, { Router } from 'express';
 import { refreshTokenAutorizationMiddleware } from '../../auth/middlewares/refresh-token-autorization-middleware';
-import { getDevicesHandler } from './handlers/getDevicesHandles';
-import { deleteAllSessionsExceptCurrentlyHandler } from './handlers/deleteAllSessionsExceptCurrentlyHandler';
-import { deleteSessionByDeviceIdHandler } from './handlers/deleteSessionByDeviceIdHandler';
+import { container } from '../../ioc/composition-root';
+import { SecurityDevicesController } from './security-devices-controller';
 
+
+const securityDevicesController = container.resolve(SecurityDevicesController);
 
 export const securityDevicesRouter: express.Router = Router({});
 
 securityDevicesRouter.get(
   "/",
   refreshTokenAutorizationMiddleware,
-  getDevicesHandler,
+  securityDevicesController.getDevicesHandler.bind(securityDevicesController)
 );
 
 securityDevicesRouter.delete(
   "/",
   refreshTokenAutorizationMiddleware,
-  deleteAllSessionsExceptCurrentlyHandler,
+  securityDevicesController.deleteAllSessionsExceptCurrentlyHandler.bind(securityDevicesController)
 );
 
 securityDevicesRouter.delete(
   "/:deviceId",
   refreshTokenAutorizationMiddleware,
-  deleteSessionByDeviceIdHandler,
+  securityDevicesController.deleteSessionByDeviceIdHandler.bind(securityDevicesController)
 );

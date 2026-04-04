@@ -1,11 +1,16 @@
 import { IUserDB } from '../types/userDBInterface';
 import { UserQueryInput } from '../types/user-query-input';
 import { UserViewModel } from '../types/user-view-model';
-import { usersCollection } from '../../repositories/db';
-import { WithId, ObjectId } from 'mongodb';
+import { WithId, ObjectId, Collection } from 'mongodb';
+import { inject, injectable } from 'inversify';
+import { TYPES } from '../../ioc/types';
+import { UserModel, UserDocument } from '../infrastructure/mongoose/user.shema';
 
 
-export const usersQueryRepository = {
+@injectable()
+export class UsersQueryRepository  {
+    constructor() {}
+
     async findAll(queryDto: UserQueryInput): Promise<{ items: UserViewModel[]; totalCount: number }> {
         const {
             searchLoginTerm,
@@ -27,16 +32,16 @@ export const usersQueryRepository = {
             filter.email = {$regex : `${searchEmailTerm}`, $options: 'i'};
         }
 
-        const items = await usersCollection
+        const items = await UserModel
             .find(filter)
             .sort({ [sortBy]: sortDirection })
             .skip(skip)
             .limit(+pageSize)
-            .toArray(); 
+            .lean(); 
 
-        const totalCount = await usersCollection.countDocuments(filter);
+        const totalCount = await UserModel.countDocuments(filter);
         return { items: this._mapToListUsersViewModel(items), totalCount};
-    },
+    }
 
    async findById(id: string): Promise<UserViewModel | null>{
         if (!ObjectId.isValid(id)) {
@@ -45,14 +50,14 @@ export const usersQueryRepository = {
             });
         }
 
-        const userDB = await usersCollection.findOne({_id: new ObjectId(id)});
+        const userDB = await UserModel.findOne({_id: new ObjectId(id)});
 
         return userDB ? this._mapToUserViewModel(userDB) : null;
-    },
+    }
 
     async findByRecoveryCode (code: string): Promise<WithId<IUserDB> | null>{
-        return usersCollection.findOne({ 'passwordRecovery.recoveryCode': code });
-    },
+        return UserModel.findOne({ 'passwordRecovery.recoveryCode': code });
+    }
 
     _mapToUserViewModel(data: WithId<IUserDB>): UserViewModel {
         return {
@@ -61,7 +66,7 @@ export const usersQueryRepository = {
             email: data.email,
             createdAt: data.createdAt,
         }
-    },
+    }
 
     _mapToListUsersViewModel(data: WithId<IUserDB>[]): UserViewModel[] {
         return data.map((item: WithId<IUserDB>) => {
@@ -72,7 +77,7 @@ export const usersQueryRepository = {
                 createdAt: item.createdAt,
             };
         });
-    },
+    }
 
     _checkObjectId(id: string): boolean {
         return ObjectId.isValid(id)

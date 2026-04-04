@@ -1,37 +1,40 @@
 import { Request, Response, NextFunction } from 'express';
 import { HttpResponceCodes } from '../../core/constants/responseCodes';
-import { RateLimitData } from '../../auth/types/rate-limt-data';
-import { rateLimitRepository } from '../repositories/rate.limit.repositories';
+import { RateLimitData, RateLimit } from '../domain/rate.limit.entity';
+import { RateLimitRepository } from '../repositories/rate.limit.repositories';
 import { add, compareAsc } from 'date-fns';
+import { container } from '../../ioc/composition-root';
+import { RateLimitModel } from '../infrastructure/mongoose/rate.limit.shema';
 
+
+const rateLimitRepository: RateLimitRepository = container.resolve(RateLimitRepository);
 
 export async function rateLimitForSendEmailMiddleware (req: Request, res: Response, next: NextFunction) {
-    const sessionDto: RateLimitData =  {
-        ip: req.ip || 'lol',
-        URL: req.originalUrl,
-        date: add(new Date(), {
-                seconds: 20
-            
-             }),
-    };
-
-    const limitId = Buffer.from(sessionDto.ip + sessionDto.URL).toString('base64');
-
-    const result = await rateLimitRepository.getLimitsByUrlAndIp(limitId);
-
-    if (!result) {
-        await rateLimitRepository.createLimitsArray(limitId, sessionDto);
-        return next();
-    }
-
-    const listLimits = await rateLimitRepository.updateLastActiveDate(limitId, sessionDto);
-
-    
-    const filter = listLimits?.rateLimits.filter((item: RateLimitData) => compareAsc(item.date, new Date()) > 0) as RateLimitData[];
-
-    if (filter.length > 5) {
-        return res.sendStatus(HttpResponceCodes.TOO_MANY_REQUESTS_429);
-    }
-
-    return next();
+   const rateLimitInstance: RateLimit = RateLimit.create({
+         ip: req.ip || 'lol',
+         URL: req.originalUrl,
+         date: add(new Date(), {
+                 seconds: 20
+             
+              }),
+     });
+ 
+     const result = await rateLimitRepository.getLimitsByUrlAndIp(rateLimitInstance.limitId);
+ 
+     if (!result) {
+         const rateLimit = new RateLimitModel(rateLimitInstance);
+         await rateLimitRepository.createLimitsArray(rateLimit);
+         return next();
+     }
+ 
+     const listLimits = await rateLimitRepository.updateLastActiveDate(rateLimitInstance.limitId, rateLimitInstance.returnFirstRateLimitData());
+ 
+     
+     const filter = listLimits?.rateLimits.filter((item: RateLimitData) => compareAsc(item.date, new Date()) > 0) as RateLimitData[];
+ 
+     if (filter.length > 5) {
+         return res.sendStatus(HttpResponceCodes.TOO_MANY_REQUESTS_429);
+     }
+ 
+     return next();
 };

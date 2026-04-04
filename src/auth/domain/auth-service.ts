@@ -4,12 +4,13 @@ import { JwtService } from '../adapters/jwt.service';
 import { UserService } from '../../users/domain/user-service';
 import { CreateUserDto } from '../../users/types/create-user-dto';
 import { User } from '../../users/domain/user.entity';
+import { UserModel } from '../../users/infrastructure/mongoose/user.shema'
 import { NodeMailerManager } from '../adapters/nodeMailer-manager';
 import { EmailExamples } from '../adapters/emailExamples';
 import { add } from 'date-fns';
 import { SecurityDevicesService } from '../../securityDevices/domain/securityDevices.service';
 import { SessionDto } from '../../securityDevices/types/session.dto';
-import { CurrentSessions } from '../../securityDevices/types/securityDevicesDBtype';
+import { CurrentSessions } from '../../securityDevices/domain/security.devices.entity';
 import { inject, injectable } from 'inversify';
 
 
@@ -98,19 +99,20 @@ export class AuthService {
             throw new Error('email is not unique')
         }
 
-        const newUser = new User(
+        const newUserInstance = User.create(
             dto.login,
             dto.email,
             passwordHash,
             passwordSalt,
         );
 
+        const newUser = new UserModel(newUserInstance);
         const createResult = await this.usersRepository.create(newUser);
 
         try {
             await this.nodeMailerManager.sendEmailConfirmationMessage(
                 newUser.email,
-                newUser.emailConfirmation.condirmationCode,
+                newUser.emailConfirmation.confirmationCode,
                 this.emailExamples.registrationEmail
             );
             

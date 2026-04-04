@@ -25,6 +25,7 @@
     "inversify": "6",
     "jsonwebtoken": "^9.0.3",
     "mongodb": "^7.1.0",
+    "mongoose": "^9.3.3",
     "nodemailer": "^8.0.2",
     "reflect-metadata": "^0.2.2"
   },
@@ -42,7 +43,7 @@
     "eslint": "^9.39.2",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.4",
-    "jest": "^30.2.0",
+    "jest": "^30.3.0",
     "mongodb-memory-server-global-4.4": "^11.0.1",
     "nodemon": "^3.1.11",
     "prettier": "^3.7.4",

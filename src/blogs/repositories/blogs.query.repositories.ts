@@ -1,11 +1,15 @@
-import { BlogDBType } from '../types/blogDBtype';
+import { BlogModel } from '../infrastructure/mongoose/blog.shema';
 import { BlogQueryInput } from '../types/blog-query-input';
 import { BlogViewModel } from '../types/blog-view-model';
-import { blogCollection } from '../../repositories/db';
 import { WithId, ObjectId } from 'mongodb';
+import { injectable } from 'inversify';
+import { IBlogDB } from '../types/blogDBinterface';
 
 
-export const blogsQueryRepository = {
+@injectable()
+export class BlogsQueryRepository {
+    constructor() {}
+
     async findAll(queryDto: BlogQueryInput): Promise<{ items: BlogViewModel[]; totalCount: number }> {
         const {
             searchNameTerm,
@@ -18,16 +22,16 @@ export const blogsQueryRepository = {
         const skip = (+pageNumber - 1) * +pageSize;
         const filter = searchNameTerm ? { name: {$regex : `${searchNameTerm}`, $options: 'i'}} : {};
 
-        const items = await blogCollection
+        const items = await BlogModel
             .find(filter)
             .sort({ [sortBy]: sortDirection })
             .skip(skip)
-            .limit(+pageSize)
-            .toArray(); 
+            .limit(+pageSize)  
+            .lean(); 
 
-        const totalCount = await blogCollection.countDocuments(filter);
+        const totalCount = await BlogModel.countDocuments(filter);
         return { items: this._mapToListBlogsViewModel(items), totalCount};
-    },
+    }
 
    async findById(id: string): Promise<BlogViewModel | null>{
         if (!ObjectId.isValid(id)) {
@@ -36,12 +40,12 @@ export const blogsQueryRepository = {
             });
         }
 
-        const result = await blogCollection.findOne({_id: new ObjectId(id)});
+        const result = await BlogModel.findOne({_id: new ObjectId(id)});
 
         return result ? this._mapToBlogViewModel(result) : null;
-    },
+    }
 
-    _mapToBlogViewModel(data: WithId<BlogDBType>): BlogViewModel {
+    _mapToBlogViewModel(data: WithId<IBlogDB>): BlogViewModel {
         return {
              id: data._id.toString(),
             name : data.name,
@@ -50,10 +54,10 @@ export const blogsQueryRepository = {
             createdAt: data.createdAt,
             isMembership: data.isMembership,
         }
-    },
+    }
 
-    _mapToListBlogsViewModel(data: WithId<BlogDBType>[]): BlogViewModel[] {
-        return data.map((item: WithId<BlogDBType>) => {
+    _mapToListBlogsViewModel(data: WithId<IBlogDB>[]): BlogViewModel[] {
+        return data.map((item: WithId<IBlogDB>) => {
             return {
                 id: item._id.toString(),
                 name : item.name,
@@ -63,5 +67,5 @@ export const blogsQueryRepository = {
                 isMembership: item.isMembership,
             };
         });
-    },
+    }
 };
