@@ -4,8 +4,8 @@ import { JwtService } from '../../../src/auth/adapters/jwt.service';
 import { UserService } from '../../../src/users/domain/user-service';
 import { NodeMailerManager } from '../../../src/auth/adapters/nodeMailer-manager';
 import { EmailExamples } from '../../../src/auth/adapters/emailExamples';
-import { MongoMemoryServer } from 'mongodb-memory-server-global-4.4';
-// import { MongoClient, Db, Collection, ObjectId,  } from 'mongodb';
+import { MongoMemoryServer } from 'mongodb-memory-server';
+import { ObjectId } from 'mongodb';
 
 import { RateLimitModel } from '../../../src/auth/infrastructure/mongoose/rate.limit.shema';
 import { BlogModel } from '../../../src/blogs/infrastructure/mongoose/blog.shema';
@@ -25,10 +25,6 @@ import { WithId } from 'mongodb';
 
 describe('integration test for AuthService', () => {
     let mongoServer: MongoMemoryServer;
-    let client: Mongoose;
-    // let db: Db;
-    // let usersCollection: Collection<IUserDB>;
-    // let securityDevicesCollection: Collection<SecurityDevicesDBtype>;
     let usersRepository: UsersRepository;
     let userService: UserService;
     let nodeMailerManagerMock: jest.Mocked<NodeMailerManager>;
@@ -41,7 +37,7 @@ describe('integration test for AuthService', () => {
     beforeAll(async () => {
         mongoServer = await MongoMemoryServer.create();
         const mongoUri = mongoServer.getUri();
-        client = await mongoose.connect(mongoUri);
+        await mongoose.connect(mongoUri);
 
         emailExamples = new EmailExamples();
         jwtService = new JwtService();
@@ -67,13 +63,13 @@ describe('integration test for AuthService', () => {
     });
 
     afterAll(async () => {
-        await client.close();
+        await mongoose.connection.close()
         await mongoServer.stop();
     })
 
     describe('createUser', () => {
         beforeAll(async () => {
-            await db.dropDatabase();
+            await mongoose?.connection?.db?.dropDatabase();
         })
 
         const userEmail = 'userEmailLo1ll@mail.ru';
@@ -120,7 +116,7 @@ describe('integration test for AuthService', () => {
 
     describe('confirm Email', () => {
         beforeAll(async () => {
-            await db.dropDatabase();
+            await mongoose?.connection?.db?.dropDatabase();
         })
 
         const correctcondirmationCode1 = 'superCode';
@@ -135,7 +131,7 @@ describe('integration test for AuthService', () => {
                     passwordSalt: 'salt',
                     createdAt: new Date().toISOString(),
                     emailConfirmation: {
-                        condirmationCode: condirmationCode,
+                        confirmationCode: condirmationCode,
                         expirationDate: expirationDate,
                         isConfirmed: false,
                     },
@@ -149,7 +145,8 @@ describe('integration test for AuthService', () => {
 
         it('should return false for expired confirmatin code', async () => {
             const user = createUser(correctcondirmationCode1, add(new Date(), { minutes: -1 }));
-            await usersCollection.insertMany([ user ]);
+            const userModel = new UserModel(user);
+            await userModel.save();
             const spy = jest.spyOn(usersRepository, 'updateConfirmationStatus');
 
             try {
@@ -157,7 +154,7 @@ describe('integration test for AuthService', () => {
             } catch(e) {
                 expect(spy).not.toHaveBeenCalled()
 
-                const userModel = await usersCollection.findOne({email: user.email});
+                const userModel = await UserModel.findOne({email: user.email});
                 expect(userModel?.emailConfirmation.isConfirmed).toBeFalsy();
 
                 const err = e as {message: string}
@@ -175,11 +172,11 @@ describe('integration test for AuthService', () => {
         });
 
         it('should return true for not expired and existing confirmatin code', async () => {
-             await usersCollection.insertMany([ createUser(correctcondirmationCode2, add(new Date(), { minutes: 1 })) ]);
+             await UserModel.insertMany([ createUser(correctcondirmationCode2, add(new Date(), { minutes: 1 })) ]);
 
             try {
                 const result = await authService.registrationConfirmation(correctcondirmationCode2) as string;
-                const userModel = await usersCollection.findOne({_id: new ObjectId(result)});
+                const userModel = await UserModel.findOne({_id: new ObjectId(result)});
 
                 expect(userModel?.emailConfirmation.isConfirmed).toBeTruthy();
 
@@ -194,7 +191,7 @@ describe('integration test for AuthService', () => {
 
     describe('refresh-token', () => {
         beforeAll(async () => {
-            await db.dropDatabase();
+            await mongoose?.connection?.db?.dropDatabase();
         })
         const ip = '::1';
         const anotherIp = '::2';
@@ -213,17 +210,19 @@ describe('integration test for AuthService', () => {
             const userId = await authService.createUser(userDto);
             const { accessToken, refreshToken } = await authService.loginUser(userDto.login, userDto.password, {ip: ip, title: title, originalUrl: originalUrl});
             const dataByToken = await jwtService.getDataByToken(refreshToken);
-            const session = await securityDevicesCollection.findOne({
+            const session = await SecurityDevicesModel.findOne({
                         userId: userId,
                         'currentSessions.lastActiveDate': dataByToken.iat,
                         'currentSessions.deviceId': dataByToken.deviceId,
-                    });
+                    }).lean();
 
             expect(session).toEqual({
+                __v: expect.any(Number),
                 _id: expect.any(ObjectId),
                 userId: userId,
                 currentSessions: [
                     {
+                        _id: expect.any(ObjectId),
                         deviceId: dataByToken.deviceId,
                         ip: ip,
                         title: title,
@@ -239,14 +238,15 @@ describe('integration test for AuthService', () => {
             validRefreshToken = newPair.newRefreshToken;
 
             const newDataByToken = await jwtService.getDataByToken(newPair.newRefreshToken);
-            const newSession = await securityDevicesCollection.findOne({
+            const newSession = await SecurityDevicesModel.findOne({
                 userId: userId,
                 'currentSessions.lastActiveDate': newDataByToken.iat,
                 'currentSessions.deviceId': newDataByToken.deviceId,
-            });
+            }).lean();
             expect(newSession?.currentSessions).not.toBeNull();
             expect(newSession!.currentSessions).toStrictEqual([
                 {
+                    _id: expect.any(ObjectId),
                     deviceId: dataByToken.deviceId,
                     ip: anotherIp,
                     title: title,
@@ -263,7 +263,7 @@ describe('integration test for AuthService', () => {
 
     describe('change Password', () => {
         beforeAll(async () => {
-            await db.dropDatabase();
+            await mongoose?.connection?.db?.dropDatabase();
         })
 
         const correctcondirmationCode1 = crypto.randomUUID();
@@ -281,7 +281,7 @@ describe('integration test for AuthService', () => {
                     passwordSalt: 'salt',
                     createdAt: new Date().toISOString(),
                     emailConfirmation: {
-                        condirmationCode: 'condirmationCode',
+                        confirmationCode: 'condirmationCode',
                         expirationDate: new Date(),
                         isConfirmed: false,
                     },
@@ -295,16 +295,14 @@ describe('integration test for AuthService', () => {
 
         it('should return false for expired confirmatin code', async () => {
             const user = createUser(correctcondirmationCode1, add(new Date(), { minutes: -1 }));
-            await usersCollection.insertMany([ user ]);
+            await UserModel.insertMany([ user ]);
+            userModel = await UserModel.findOne({email: user.email});
             const spy = jest.spyOn(usersRepository, 'updatePassword');
 
             try {
                 const result = await authService.newPasswordConfirmation(newPassword, correctcondirmationCode1) as string;                
             } catch(e) {
-                expect(spy).not.toHaveBeenCalled()
-
-                userModel = await usersCollection.findOne({email: user.email});
-
+                expect(spy).not.toHaveBeenCalled();
                 expect(userModel?.passwordRecovery.isRecovered).toBeFalsy();
 
                 const err = e as {message: string}
@@ -322,7 +320,7 @@ describe('integration test for AuthService', () => {
         });
 
         it('should return true for not expired and existing confirmatin code', async () => {
-             await usersCollection.updateOne({_id: userModel!._id},
+             await UserModel.updateOne({_id: userModel!._id},
                 {$set: {
                     'passwordRecovery.recoveryCode': correctcondirmationCode2,
                     'passwordRecovery.recoveryExpirationDate': add(new Date(), { minutes: 10 })
@@ -331,7 +329,7 @@ describe('integration test for AuthService', () => {
 
             try {
                 const result = await authService.newPasswordConfirmation(newPassword2, correctcondirmationCode2) as string;
-                const userModel = await usersCollection.findOne({_id: new ObjectId(result)});
+                const userModel = await UserModel.findOne({_id: new ObjectId(result)});
 
                 expect(userModel?.passwordRecovery.isRecovered).toBeTruthy();
 

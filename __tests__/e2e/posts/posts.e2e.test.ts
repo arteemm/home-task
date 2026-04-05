@@ -8,17 +8,24 @@ import { createBlog } from '../../utils/blogs/create-blog';
 import { getBlogDto } from '../../utils/blogs/get-blog-dto';
 import { getPostDto } from '../../utils/posts/get-post-dto';
 import { createPost } from '../../utils/posts/create-post';
+import mongoose from 'mongoose';
 
  
 describe(POSTS_PATH, () => {
     const app = express();
     setupApp(app);
+    const mongoURI = 'mongodb://0.0.0.0:27017/home-task';
 
     let testEntity: PostViewModel = {} as PostViewModel;
     let testBlogId: string = '';
 
     beforeAll(async () => {
+        await mongoose.connect(mongoURI);
         await request(app).delete(TESTING_PATH);
+    });
+
+    afterAll(async () => {
+        await mongoose.connection.close();
     });
 
     it('should return 200 and empty array', async () => {
@@ -76,8 +83,4 @@ describe(POSTS_PATH, () => {
             expect(response.body.items).toBeInstanceOf(Array);
             expect(response.body.items.length).toBeGreaterThanOrEqual(2);
     });
-
-    afterAll((done) => {
-        done();  
-    })
 });

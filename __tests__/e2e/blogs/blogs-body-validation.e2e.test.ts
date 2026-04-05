@@ -7,16 +7,23 @@ import { API_ERRORS } from '../../../src/core/constants/apiErrors';
 import { BLOGS_PATH, TESTING_PATH } from '../../../src/core/constants/paths';
 import { createBlog } from '../../utils/blogs/create-blog';
 import { getBlogDto } from '../../utils/blogs/get-blog-dto';
+import mongoose from 'mongoose';
 
 
 describe('Blog API body validation check', () => {
     const app = express();
     setupApp(app);
+    const mongoURI = 'mongodb://0.0.0.0:27017/home-task';
 
     let testEntity: BlogViewModel = {} as BlogViewModel;
 
     beforeAll(async () => {
+        await mongoose.connect(mongoURI);
         await request(app).delete(TESTING_PATH);
+    });
+
+    afterAll(async () => {
+        await mongoose.connection.close();
     });
 
     it('shouldn\'t create entity with incorrect input data, 400', async () => {
@@ -127,8 +134,4 @@ describe('Blog API body validation check', () => {
                 { ...testEntity }
             ]});
     });
-
-    afterAll((done) => {
-        done();  
-    })
 });

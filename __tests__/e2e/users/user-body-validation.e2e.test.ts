@@ -9,16 +9,18 @@ import { createUser } from '../../utils/users/create-user';
 import { getUserDto } from '../../utils/users/get-user-dto';
 import { UserViewModel } from '../../../src/users/types/user-view-model';
 import { loginUser } from '../../utils/users/login-user';
-import { client } from '../../../src/repositories/db';
+import mongoose from 'mongoose';
 
 
 describe('User API body validation check', () => {
     const app = express();
     setupApp(app);
+    const mongoURI = 'mongodb://0.0.0.0:27017/home-task';
 
     let testEntity: UserViewModel = {} as UserViewModel;
 
     beforeAll(async () => {
+        await mongoose.connect(mongoURI);
         await request(app).delete(TESTING_PATH);
     });
 
@@ -109,6 +111,6 @@ describe('User API body validation check', () => {
     });
 
     afterAll(async () => {
-        await client.close();
+        await mongoose.connection.close();
     })
 });

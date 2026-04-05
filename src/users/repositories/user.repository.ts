@@ -33,7 +33,7 @@ export class UsersRepository {
     }
 
     async findByConfirmationCode (code: string): Promise<WithId<IUserDB> | null>{
-        return UserModel.findOne({ 'emailConfirmation.condirmationCode': code });
+        return UserModel.findOne({ 'emailConfirmation.confirmationCode': code });
     }
 
     async findByRecoveryCode (code: string): Promise<WithId<IUserDB> | null>{
@@ -53,7 +53,7 @@ export class UsersRepository {
 
     async updateConfirmationCode(id: string, code: string, expirationDate: Date ): Promise<void> {
         const matchesResalt = await UserModel.updateOne({_id: new ObjectId(id)}, { $set: {
-                    'emailConfirmation.condirmationCode': code,
+                    'emailConfirmation.confirmationCode': code,
                     'emailConfirmation.expirationDate': expirationDate,
                 }});
 

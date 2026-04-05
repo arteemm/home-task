@@ -6,12 +6,13 @@ import { UserViewModel } from '../../../src/users/types/user-view-model';
 import { USER_PATH, TESTING_PATH, AUTH_PATH, SECURITY_DEVICES_PATH } from '../../../src/core/constants/paths';
 import { getUserDto } from '../../utils/users/get-user-dto';
 import { createUser } from '../../utils/users/create-user';
-import { client } from '../../../src/repositories/db';
+import mongoose from 'mongoose';
 
  
 describe(USER_PATH, () => {
     const app = express();
     setupApp(app);
+    const mongoURI = 'mongodb://0.0.0.0:27017/home-task';
 
     let user: UserViewModel = {} as UserViewModel;
     let accessToken: string;
@@ -24,6 +25,7 @@ describe(USER_PATH, () => {
     };
 
     beforeAll(async () => {
+        await mongoose.connect(mongoURI);
         await request(app).delete(TESTING_PATH);
         const createResponce = await createUser(app, getUserDto(), HttpResponceCodes.CREATED_201);
         user = structuredClone(createResponce);
@@ -122,6 +124,6 @@ describe(USER_PATH, () => {
     });
 
     afterAll(async () => {
-        await client.close();
+        await mongoose.connection.close();
     })
 });

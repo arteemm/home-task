@@ -255,6 +255,10 @@ export class AuthService {
     async newPasswordConfirmation(newPassword: string, recoveryCode: string): Promise<string> {
         const user = await this.usersRepository.findByRecoveryCode(recoveryCode);
 
+        if (!user) {
+            throw new Error('user is not exist')
+        }
+
         const id = user!._id.toString();
         const passwordSalt = await bcrypt.genSalt(10);
         const passwordHash = await this.userService.generateHash(newPassword, passwordSalt);

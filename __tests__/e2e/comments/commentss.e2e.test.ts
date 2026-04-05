@@ -16,11 +16,13 @@ import { getUserDto } from '../../utils/users/get-user-dto';
 import { createComment } from '../../utils/comments/create-comment';
 import { getCommentDto } from '../../utils/comments/get-comment-dto';
 import { CommentViewModel } from '../../../src/comments/types/commentViewModel';
+import mongoose from 'mongoose';
 
  
 describe(COMMENTS_PATH, () => {
     const app = express();
     setupApp(app);
+    const mongoURI = 'mongodb://0.0.0.0:27017/home-task';
 
     let blog: BlogViewModel = {} as BlogViewModel;
     let post: PostViewModel ={} as PostViewModel;
@@ -29,6 +31,7 @@ describe(COMMENTS_PATH, () => {
     let comment: CommentViewModel = {} as CommentViewModel;
 
     beforeAll(async () => {
+        await mongoose.connect(mongoURI);
         await request(app).delete(TESTING_PATH);
 
         user = await createUser(
@@ -59,6 +62,11 @@ describe(COMMENTS_PATH, () => {
             HttpResponceCodes.CREATED_201,
         )
     });
+
+    afterAll(async () => {
+        await mongoose.connection.close();
+    });
+
 
     it('should return 200 and empty array', async () => {
         await request(app)
@@ -170,8 +178,4 @@ describe(COMMENTS_PATH, () => {
             expect(response.body.items).toBeInstanceOf(Array);
             expect(response.body.items.length).toBeGreaterThanOrEqual(2);
     });
-
-    afterAll((done) => {
-        done();  
-    })
 });

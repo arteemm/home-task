@@ -17,12 +17,14 @@ import { createComment } from '../../utils/comments/create-comment';
 import { getCommentDto } from '../../utils/comments/get-comment-dto';
 import { CommentViewModel } from '../../../src/comments/types/commentViewModel';
 import { API_ERRORS } from '../../../src/core/constants/apiErrors';
+import mongoose from 'mongoose';
 
 
 describe('Comments API body validation check', () => {
     const app = express();
     setupApp(app);
 
+    const mongoURI = 'mongodb://0.0.0.0:27017/home-task';
     let blog: BlogViewModel = {} as BlogViewModel;
     let post: PostViewModel ={} as PostViewModel;
     let user: UserViewModel = {} as UserViewModel;
@@ -30,6 +32,7 @@ describe('Comments API body validation check', () => {
     let comment: CommentViewModel = {} as CommentViewModel;
 
     beforeAll(async () => {
+        await mongoose.connect(mongoURI);
         await request(app).delete(TESTING_PATH);
     
             user = await createUser(
@@ -59,6 +62,10 @@ describe('Comments API body validation check', () => {
                 getPostDto({blogId: blog.id}),
                 HttpResponceCodes.CREATED_201,
             )
+    });
+
+    afterAll(async () => {
+        await mongoose.connection.close();
     });
 
     it('shouldn\'t create comment with incorrect data , 400', async () => {
@@ -306,8 +313,4 @@ describe('Comments API body validation check', () => {
             createdAt: comment.createdAt,
         });
     });
-
-    afterAll((done) => {
-        done();  
-    })
 });

@@ -9,18 +9,26 @@ import { createBlog } from '../../utils/blogs/create-blog';
 import { getBlogDto } from '../../utils/blogs/get-blog-dto';
 import { getPostDto } from '../../utils/posts/get-post-dto';
 import { createPost } from '../../utils/posts/create-post';
+import mongoose from 'mongoose';
 
 
 describe('Post API body validation check', () => {
     const app = express();
     setupApp(app);
+    const mongoURI = 'mongodb://0.0.0.0:27017/home-task';
 
     let testEntity: PostViewModel = {} as PostViewModel;
     let testBlogId: string = '';
 
     beforeAll(async () => {
+        await mongoose.connect(mongoURI);
         await request(app).delete(TESTING_PATH);
     });
+
+    afterAll(async () => {
+        await mongoose.connection.close();
+    });
+
 
     it('shouldn\'t create entity with incorrect input data, 400', async () => {
         await createPost(
@@ -132,8 +140,4 @@ describe('Post API body validation check', () => {
                 { ...testEntity }
             ]});
     });
-
-    afterAll((done) => {
-        done();  
-    })
 });

@@ -195,6 +195,11 @@ export class AuthController {
             await this.rateLimitRepository.deleteAllActivities(limitIdNewPassword);
             return res.sendStatus(HttpResponceCodes.NO_CONTENT_204);
         } catch(e: unknown) {
+            const err = e as { message: string };
+            if (err?.message === 'user is not exist') {
+                return res.status(HttpResponceCodes.BAD_REQUEST_400).send({errorsMessages: [ API_ERRORS.recoveryCode.NOT_FIND ]});
+            }
+
             throw new Error('some error in create user handler');
         }
     }
