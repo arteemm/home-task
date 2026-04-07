@@ -10,20 +10,17 @@ import cookieParser from 'cookie-parser';
 import { securityDevicesRouter } from './securityDevices/routes/securityDevicesRouter';
  
 
-export const setupApp = (app: Express) => {
+export const app = express()
 
-  app.set('trust proxy', true);
+app.set('trust proxy', true);
 
-  app.use(express.json()); // middleware для парсинга JSON в теле запроса
-  app.use(cookieParser()); // middleware для парсинга Cookies в теле запроса
- 
-  app.use(BLOGS_PATH, blogsRouter);
-  app.use(POSTS_PATH, postsRouter);
-  app.use(TESTING_PATH, testingRouter);
-  app.use(USER_PATH, usersRouter);
-  app.use(AUTH_PATH, authRouter);
-  app.use(COMMENTS_PATH, commentsRouter);
-  app.use(SECURITY_DEVICES_PATH, securityDevicesRouter);
+app.use(express.json()); // middleware для парсинга JSON в теле запроса
+app.use(cookieParser()); // middleware для парсинга Cookies в теле запроса
 
-  return app;
-};
+app.use(BLOGS_PATH, blogsRouter);
+app.use(POSTS_PATH, postsRouter);
+app.use(TESTING_PATH, testingRouter);
+app.use(USER_PATH, usersRouter);
+app.use(AUTH_PATH, authRouter);
+app.use(COMMENTS_PATH, commentsRouter);
+app.use(SECURITY_DEVICES_PATH, securityDevicesRouter);
