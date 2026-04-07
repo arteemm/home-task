@@ -1,6 +1,9 @@
 import { ICommentDB } from '../types/commentsDBInterface';
 import { CommentDocument, CommentModel } from '../infrastructure/mongoose/comment.shema';
+import { LikeOfCommentModel, LikeInfoSchemaDocument } from '../infrastructure/mongoose/like-of-comment.schema';
 import { CommentQueryInput } from '../../comments/types/comment-query-input';
+import { ILikeOfCommentDB } from '../../comments/types/likeOfCommentInterface';
+import { LikeofCommentInfo } from '../../comments/domain/like-of-comment.entity';
 import { CommentViewModel } from '../types/commentViewModel';
 import { WithId, ObjectId } from 'mongodb';
 import { injectable } from 'inversify';
@@ -44,6 +47,51 @@ export class CommentsQueryRepository {
         return commentDB ? this._mapToCommentViewModel(commentDB) : null;
     }
 
+    async findLikeByCommentIdAndUserId(commentId: string, userId: string): Promise<LikeofCommentInfo | null>  {
+        let responce: LikeofCommentInfo | undefined;
+        try {
+            const result = await LikeOfCommentModel.findOne({
+                commentId: commentId,
+                'likesListofComment.userId': userId,
+            });
+
+            if (!result) {
+                return null;
+            }
+
+            responce = result.likesListofComment.find(item => item.userId === userId);
+
+        } catch(e) {
+            console.error(e);
+        }
+
+        if (!responce) {
+            return null;
+        }
+
+        return responce;
+    }
+
+    async findLikesListByCommentId(commentId: string): Promise<LikeofCommentInfo[] | null>  {
+        const result = await LikeOfCommentModel.findOne({ commentId: commentId });
+
+        if (!result) {
+            return null;
+        }
+
+        return result.likesListofComment;
+    }
+
+    async findLikesListByPostId(postId: string): Promise<ILikeOfCommentDB[] | null>  {
+        const result = await LikeOfCommentModel.find({ 'likesListofComment.postId': postId }).lean();
+
+        if (!result) {
+            return null;
+        }
+
+        return result;
+    }
+
     _mapToCommentViewModel(data: WithId<ICommentDB>): CommentViewModel {
         return {
             id: data._id.toString(),
@@ -53,6 +101,11 @@ export class CommentsQueryRepository {
                 userLogin: data.commentatorInfo.userLogin,
             },
             createdAt: data.createdAt,
+            likesInfo: {
+                likesCount: 0,
+                dislikesCount: 0,
+                myStatus: 'None',
+            }
         }
     }
 
@@ -66,11 +119,12 @@ export class CommentsQueryRepository {
                     userLogin: item.commentatorInfo.userLogin
                 },
                 createdAt: item.createdAt,
+                likesInfo: {
+                    likesCount: 0,
+                    dislikesCount: 0,
+                    myStatus: 'None',
+                }
             };
         });
-    }
-
-    _checkObjectId(id: string): boolean {
-        return ObjectId.isValid(id)
     }
 };

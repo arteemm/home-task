@@ -7,6 +7,8 @@ import { PostsQueryRepository } from '../repositories/post.query.repository';
 import { CreatePostDto } from '../types/create-post-dto';
 import { PostsService } from '../domain/posts-service';
 import { UpdatePostDto } from '../types/update-post-dto';
+import { getLikesInfoAddapter } from '../../comments/adapters/get-likes-info-adapter';
+import { getLikesListInfoAddapter } from '../../comments/adapters/get-likes-list-info-adapter';
 
 
 @injectable()
@@ -22,6 +24,12 @@ export class PostsController {
         const postId = req.params.id.toString();
 
         const { items, totalCount } = await this.commentsQueryRepository.findAll(queryInput, postId);
+        const itemsWithCorrectLikeStatus = await getLikesListInfoAddapter(
+            postId,
+            req,
+            this.commentsQueryRepository,
+            items,
+        )
 
         if (totalCount === 0) {
             res.sendStatus(HttpResponceCodes.NOT_FOUND_404);
@@ -33,7 +41,7 @@ export class PostsController {
             page: +queryInput.pageNumber,
             pageSize: +queryInput.pageSize,
             totalCount: totalCount,
-            items,
+            itemsWithCorrectLikeStatus,
         };
 
         res.status(HttpResponceCodes.OK_200).send(blogViewModel);
@@ -80,7 +88,9 @@ export class PostsController {
     
         const result = await this.postsService.creteCommentInPost(postId, userId, req.body.content);
         const comment = await this.commentsQueryRepository.findById(result);
-    
+
+        const likesInfo = await getLikesInfoAddapter(comment!.id, req, this.commentsQueryRepository);
+        comment!.likesInfo = likesInfo;
         return res.status(HttpResponceCodes.CREATED_201).send(comment);
     }
 

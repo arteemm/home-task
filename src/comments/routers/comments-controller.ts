@@ -4,6 +4,8 @@ import { CommentsQueryRepository } from '../repositories/comment.query.repositor
 import { CommentViewModel } from '../types/commentViewModel';
 import { inject, injectable } from 'inversify';
 import { CommentsService } from '../domain/comment-service';
+import { LikeStatusType } from '../types/like-status.dto';
+import { getLikesInfoAddapter } from '../adapters/get-likes-info-adapter';
 
 
 @injectable()
@@ -23,6 +25,8 @@ export class CommentsController {
                 return;
             }
 
+            const likesInfo = await getLikesInfoAddapter(commentById.id, req, this.commentsQueryRepository);
+            commentById.likesInfo = likesInfo;
             res.status(HttpResponceCodes.OK_200).send(commentById);
         } catch(e: unknown) {
             res.sendStatus(HttpResponceCodes.InternalServerError);
@@ -34,6 +38,18 @@ export class CommentsController {
             const id = req.params.id.toString();
     
             await this.commentsService.update(id, req.body);
+            res.sendStatus(HttpResponceCodes.NO_CONTENT_204);
+        }  catch(err: unknown) {
+            res.sendStatus(HttpResponceCodes.InternalServerError);
+        }
+    }
+
+    async updateLikeStatus(req: Request<{id: string, userId: string}, {}, {likeStatus: LikeStatusType}, {}>, res: Response) {
+        try {
+            const commentId = req.params.id.toString();
+            const userId = req.userId as string;
+            
+            await this.commentsService.updateLikeStatus(commentId, userId, req.body);
             res.sendStatus(HttpResponceCodes.NO_CONTENT_204);
         }  catch(err: unknown) {
             res.sendStatus(HttpResponceCodes.InternalServerError);

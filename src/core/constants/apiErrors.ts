@@ -58,6 +58,7 @@ type OtherErrorsType = {
     email: Omit<SimpleErrorObj, 'IS_TOO_LONG'> & { NOT_CORRECT: ErrorMessage, MUST_BE_UNIQUE: ErrorMessage, APPLIED: ErrorMessage },
     code: Omit<SimpleErrorObj, 'IS_TOO_LONG'> & { EXPIRED: ErrorMessage, APPLIED: ErrorMessage},
     recoveryCode: Omit<SimpleErrorObj, 'IS_TOO_LONG'> & { EXPIRED: ErrorMessage, APPLIED: ErrorMessage},
+    likeStatus: Omit<SimpleErrorObj, 'IS_TOO_LONG'> & { MUST_BE_ONLY: ErrorMessage },
 };
 
 export type  ApiErrorsType = SimpleErrorsType & OtherErrorsType;
@@ -154,6 +155,11 @@ export const API_ERRORS:  ApiErrorsType = {
         NOT_FIND: getNotFindMessage('newPassword'),
         IS_TOO_LONG: getNotCorrectMessage('length must be more than 6 and less than 20 symbols', 'newPassword'),
     },
+    likeStatus: {
+        NOT_A_STRING: getNotStringMessage('likeStatus'),
+        NOT_FIND: getNotFindMessage('likeStatus'),
+        MUST_BE_ONLY: getNotCorrectMessage('likeStatus nust be only None, Like, Dislike', 'likeStatus'),
+    }
 };
 
 

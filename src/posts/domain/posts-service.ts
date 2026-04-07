@@ -7,6 +7,8 @@ import { CommentRepository } from '../../comments/repositories/comment.repositor
 import { UsersQueryRepository } from '../../users/repositories/user.query.repository';
 import { Comment } from '../../comments/domain/comment.entity';
 import { CommentModel, CommentDocument } from '../../comments/infrastructure/mongoose/comment.shema';
+import { LikeOfCommentModel } from '../../comments/infrastructure/mongoose/like-of-comment.schema';
+import { LikeOfComment } from '../../comments/domain/like-of-comment.entity';
 import { inject, injectable } from 'inversify';
 import { PostDocument, PostModel } from '../infrastructure/mongoose/post.shema';
 
@@ -24,7 +26,7 @@ export class PostsService {
         return this.postsRepository.findById(id);
     }
 
-    async create(postDto: CreatePostDto):  Promise<string> {
+    async create(postDto: CreatePostDto): Promise<string> {
         const blog = await this.blogsRepository.findById(postDto.blogId);
         const blogName = `${blog?.name}`;
 
@@ -49,8 +51,18 @@ export class PostsService {
                 postId,
             );
             const newComment = new CommentModel(newCommentInstance);
+            const commentId = await this.commentRepository.create(newComment);
 
-            return this.commentRepository.create(newComment);
+            const newLikeInstance = LikeOfComment.create(
+                commentId,
+                'None',
+                postId,
+                userId
+            )
+            const newLike = new LikeOfCommentModel(newLikeInstance);
+            this.commentRepository.createLike(newLike);
+
+            return commentId;
         } catch(e: unknown) {
             console.error('something wrongg in create comment service');
             throw new Error('something wrongg in create comment service');

@@ -9,6 +9,7 @@ import { CommentSortField } from '../../comments/routers/input/comment-sort-fiel
 import { checkExistPostByIdMiddleware } from './middlewares/check-exist-post-by-Id.middleware';
 import { container } from '../../ioc/composition-root';
 import { PostsController } from './posts-controller';
+import { accessTokenAutorizationOptionalMiddleware } from '../../comments/routers/middlewares/access-token-autorization-optional-middleware'
 
 
 const postsController = container.resolve(PostsController);
@@ -31,6 +32,7 @@ postsRouter.get(
   "/:id/comments",
   paginationAndSortingValidation(CommentSortField),
   checkExistPostByIdMiddleware,
+  accessTokenAutorizationOptionalMiddleware,
   postsController.getCommentListHandler.bind(postsController)
 );
 
