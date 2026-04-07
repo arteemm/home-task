@@ -7,7 +7,7 @@ import { container } from '../../ioc/composition-root';
 import { UserController } from './user-controller';
 
 
-const userController = container.resolve(UserController)
+const userController = container.resolve(UserController);
 
 export const usersRouter: express.Router = Router({});
 

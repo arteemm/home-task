@@ -12,6 +12,15 @@ const contentValidation = body('content')
     .isLength({ min: 20, max: 300 })
     .withMessage(API_ERRORS.content.IS_TOO_LONG.message);
 
+const likeStatusValidation = body('likeStatus')
+    .notEmpty()
+    .withMessage(API_ERRORS.likeStatus.NOT_FIND.message)
+    .isString()
+    .withMessage(API_ERRORS.likeStatus.NOT_A_STRING.message)
+    .trim()
+    .isIn(['None' , 'Like' , 'Dislike'])
+    .withMessage(API_ERRORS.likeStatus.MUST_BE_ONLY.message);
+
 export const createCommentValidation = [
     contentValidation,
     errorsHandler
@@ -19,5 +28,10 @@ export const createCommentValidation = [
 
 export const updateCommentValidation = [
     contentValidation,
+    errorsHandler
+];
+
+export const likeStatusValidationErr = [
+    likeStatusValidation,
     errorsHandler
 ];

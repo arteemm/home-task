@@ -1,43 +1,52 @@
 import { add } from 'date-fns';
 
 export class User {
-    userName: string;
-    email: string;
-    passwordHash: string;
-    passwordSalt: string;
-    createdAt: string;
-    emailConfirmation: {
-        condirmationCode: string;
-        expirationDate: Date;
-        isConfirmed: boolean;
-    };
-    passwordRecovery: {
-        recoveryCode: string;
-        recoveryExpirationDate: Date;
-        isRecovered: boolean;
-    };
+    constructor(
+        public userName: string,
+        public email: string,
+        public passwordHash: string,
+        public passwordSalt: string,
+        public createdAt: string,
+        public emailConfirmation: EmailConfirmation,
+        public passwordRecovery: PasswordRecovery,
+    ) {}
 
-    constructor(login: string, email: string, hash: string, salt: string) {
-        this.userName = login;
-        this.email = email;
-        this.passwordHash = hash;
-        this.passwordSalt = salt;
-        this.createdAt = new Date().toISOString();
-        this.emailConfirmation = {
-            condirmationCode: crypto.randomUUID(),
-            expirationDate: add(new Date(), {
-                hours: 1,
-                // minutes: 1,
-            }),
-            isConfirmed: false,
-        }
-        this.passwordRecovery = {
-            recoveryCode: '1',
-            recoveryExpirationDate: add(new Date(), {
-                hours: 1,
-                // minutes: 1,
-            }),
-            isRecovered: false,
-        }
+    static create(login: string, email: string, passwordHash: string, passwordSalt: string): User {
+        return new User(
+            login,
+            email,
+            passwordHash,
+            passwordSalt,
+            new Date().toISOString(),
+            {
+                confirmationCode: crypto.randomUUID(),
+                expirationDate: add(new Date(), {
+                    hours: 1,
+                    // minutes: 1,
+                }),
+                isConfirmed: false,
+            },
+            {
+                recoveryCode: crypto.randomUUID(),
+                recoveryExpirationDate: add(new Date(), {
+                    hours: 1,
+                    // minutes: 1,
+                }),
+                isRecovered: false,
+            }
+        )
     }
 }
+
+
+type EmailConfirmation = {
+    confirmationCode: string;
+    expirationDate: Date;
+    isConfirmed: boolean;
+};
+
+type PasswordRecovery = {
+    recoveryCode: string;
+    recoveryExpirationDate: Date;
+    isRecovered: boolean;
+};

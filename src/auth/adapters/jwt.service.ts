@@ -8,7 +8,7 @@ import { inject, injectable } from 'inversify';
 export class JwtService {
     async createAccessToken(userId: string) {
         const token = jwt.sign({userId: userId, date: Date.now()}, appConfig.SECRET_KEY, {
-            expiresIn: '10s'
+            expiresIn: '10m'
             // expiresIn: `1h`
         })
         return token;
@@ -16,7 +16,7 @@ export class JwtService {
 
     async createRefreshToken(userId: string, deviceId: string) {
         const token = jwt.sign({userId: userId, deviceId: deviceId, date: Date.now()}, appConfig.SECRET_KEY, {
-            expiresIn: '20s'
+            expiresIn: '20m'
             // expiresIn: `24h`
         })
         return token;

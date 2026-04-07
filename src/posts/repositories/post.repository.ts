@@ -1,29 +1,34 @@
-import { PostDBType } from '../types/postDBtype';
+import { PostDocument, PostModel } from '../infrastructure/mongoose/post.shema';
 import { UpdatePostDto } from '../types/update-post-dto';
-import { postsCollection } from '../../repositories/db';
+import { IPostDB } from '../types/postDBinterface';
 import { ObjectId } from 'mongodb';
 import { API_ERRORS } from '../../core/constants/apiErrors';
+import { inject, injectable } from 'inversify';
+import { TYPES } from '../../ioc/types';
 
 
-export const postsRepository = {
-    async findById(id: string):  Promise<PostDBType | null>{
+@injectable()
+export class PostsRepository {
+    constructor() {}
+
+    async findById(id: string):  Promise<PostDocument | null>{
         if (!ObjectId.isValid(id)) {
             return new Promise((res, rej) => {
                 res(null)
             });
         }
 
-        return postsCollection.findOne({_id: new ObjectId(id)});
-    },
+        return PostModel.findOne({_id: new ObjectId(id)});
+    }
 
-    async create(newEntity: PostDBType):  Promise<string> {
-        const insertResalt = await postsCollection.insertOne(newEntity); 
+    async create(post: PostDocument):  Promise<string> {
+        const insertResalt = await post.save(); 
         
-        return insertResalt.insertedId.toString();
-    },
+        return insertResalt._id.toString();
+    }
 
     async update(id: string, postParam: UpdatePostDto): Promise<void> {
-        const matchesResalt = await postsCollection.updateOne({_id: new ObjectId(id)}, {$set: {
+        const matchesResalt = await PostModel.updateOne({_id: new ObjectId(id)}, {$set: {
             title: postParam.title,
             shortDescription: postParam.shortDescription,
             content: postParam.content,
@@ -33,10 +38,10 @@ export const postsRepository = {
         if (matchesResalt.matchedCount < 1) {
             throw new Error(API_ERRORS.id_not_exist);
         }
-    },
+    }
 
     async delete(id: string): Promise<void> {
-        const deletedBlog = await postsCollection.deleteOne({_id: new ObjectId(id)})
+        const deletedBlog = await PostModel.deleteOne({_id: new ObjectId(id)})
 
         if (deletedBlog.deletedCount < 1) {
             throw new Error(API_ERRORS.id_not_exist);

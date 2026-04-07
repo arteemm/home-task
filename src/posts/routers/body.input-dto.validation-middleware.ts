@@ -1,8 +1,11 @@
 import { errorsHandler } from '../../core/middlewares/errorsHandlerMiddleware';
 import { body } from 'express-validator';
-import { blogsRepository } from '../../blogs/repositories/blogs.repository';
+import { BlogsRepository } from '../../blogs/repositories/blogs.repository';
 import { API_ERRORS } from '../../core/constants/apiErrors';
+import { container } from '../../ioc/composition-root';
 
+
+const blogsRepository: BlogsRepository = container.resolve(BlogsRepository);
 
 const titleValidation = body('title')
     .notEmpty()

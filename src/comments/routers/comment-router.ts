@@ -1,18 +1,21 @@
 import express, { Router } from 'express';
-import { getCommentByIdHandler } from './handlers/get-comment.handler';
-import { updateCommentHandler } from './handlers/update-comment.handler';
-import { deleteCommentHandler } from './handlers/delete-comment.handler';
-import { updateCommentValidation } from './body.input-dto.validation-middleware';
+import { updateCommentValidation, likeStatusValidationErr } from './body.input-dto.validation-middleware';
 import { accessTokenAutorizationMiddleware } from '../../auth/middlewares/access-token-autorization-middleware';
 import { checkExistCommentByIdMiddleware } from './middlewares/check-exist-comment-by-Id.middleware';
 import { checOwnerCommentMiddleware } from './middlewares/check-owner-comment-middleware';
+import { CommentsController } from './comments-controller';
+import { container } from '../../ioc/composition-root';
+import { accessTokenAutorizationOptionalMiddleware } from './middlewares/access-token-autorization-optional-middleware';
 
+
+const commentsController = container.resolve(CommentsController);
 
 export const commentsRouter: express.Router = Router({});
 
 commentsRouter.get(
   "/:id",
-  getCommentByIdHandler
+  accessTokenAutorizationOptionalMiddleware,
+  commentsController.getCommentByIdHandler.bind(commentsController)
 );
 
 commentsRouter.put(
@@ -21,7 +24,15 @@ commentsRouter.put(
   updateCommentValidation,
   checkExistCommentByIdMiddleware,
   checOwnerCommentMiddleware,
-  updateCommentHandler
+  commentsController.updateCommentHandler.bind(commentsController)
+);
+
+commentsRouter.put(
+  "/:id/like-status",
+  accessTokenAutorizationMiddleware,
+  likeStatusValidationErr,
+  checkExistCommentByIdMiddleware,
+  commentsController.updateLikeStatus.bind(commentsController)
 );
 
 commentsRouter.delete(
@@ -29,5 +40,5 @@ commentsRouter.delete(
   accessTokenAutorizationMiddleware,
   checkExistCommentByIdMiddleware,
   checOwnerCommentMiddleware,
-  deleteCommentHandler
+  commentsController.deleteCommentHandler.bind(commentsController)
 );

@@ -1,33 +1,40 @@
-import { PostDBType } from '../types/postDBtype';
+import { Post } from './post.entity';
 import { CreatePostDto } from '../types/create-post-dto';
 import { UpdatePostDto } from '../types/update-post-dto';
-import { blogsRepository } from '../../blogs/repositories/blogs.repository';
-import { postsRepository } from '../repositories/post.repository';
-import { commentRepository } from '../../comments/repositories/comment.repository';
-import { usersQueryRepository } from '../../users/repositories/user.query.repository';
-import { CommentsDBType } from '../../comments/types/commentsDBtype';
+import { BlogsRepository } from '../../blogs/repositories/blogs.repository';
+import { PostsRepository } from '../repositories/post.repository';
+import { CommentRepository } from '../../comments/repositories/comment.repository';
+import { UsersQueryRepository } from '../../users/repositories/user.query.repository';
+import { Comment } from '../../comments/domain/comment.entity';
+import { CommentModel, CommentDocument } from '../../comments/infrastructure/mongoose/comment.shema';
+import { LikeOfCommentModel } from '../../comments/infrastructure/mongoose/like-of-comment.schema';
+import { LikeOfComment } from '../../comments/domain/like-of-comment.entity';
+import { inject, injectable } from 'inversify';
+import { PostDocument, PostModel } from '../infrastructure/mongoose/post.shema';
 
 
-export const postsService = {
-    async findById(id: string):  Promise<PostDBType | null>{
-        return postsRepository.findById(id);
-    },
+@injectable()
+export class PostsService {
+    constructor(
+        @inject(BlogsRepository) protected blogsRepository: BlogsRepository,
+        @inject(PostsRepository) protected postsRepository: PostsRepository,
+        @inject(UsersQueryRepository) protected usersQueryRepository: UsersQueryRepository,
+        @inject(CommentRepository) protected commentRepository: CommentRepository,
+    ) {}
 
-    async create(postDto: CreatePostDto):  Promise<string> {
-        const blog = await blogsRepository.findById(postDto.blogId);
+    async findById(id: string):  Promise<PostDocument | null>{
+        return this.postsRepository.findById(id);
+    }
+
+    async create(postDto: CreatePostDto): Promise<string> {
+        const blog = await this.blogsRepository.findById(postDto.blogId);
         const blogName = `${blog?.name}`;
 
-        const newPost: PostDBType = {
-            title: postDto.title,
-            shortDescription: postDto.shortDescription,
-            content: postDto.content,
-            blogId: postDto.blogId,
-            blogName: blogName,
-            createdAt: new Date().toISOString(),
-        };
+        const newPostInstance: Post = Post.create(postDto, blogName);
+        const newPost = new PostModel(newPostInstance);
 
-        return postsRepository.create(newPost); 
-    },
+        return this.postsRepository.create(newPost); 
+    }
 
     async creteCommentInPost(
         postId: string,
@@ -35,30 +42,38 @@ export const postsService = {
         content: string,
     ) {
         try {
-            const user = await usersQueryRepository.findById(userId);
+            const user = await this.usersQueryRepository.findById(userId);
 
-            const newComment: CommentsDBType = {
-                content: content,
-                commentatorInfo: {
-                    userId: userId,
-                    userLogin: user!.login
-                },
-                createdAt: new Date().toISOString(),
-                postId: postId
-            }
+            const newCommentInstance: Comment = Comment.create(
+                content,
+                userId,
+                user!.login,
+                postId,
+            );
+            const newComment = new CommentModel(newCommentInstance);
+            const commentId = await this.commentRepository.create(newComment);
 
-            return commentRepository.create(newComment);
+            const newLikeInstance = LikeOfComment.create(
+                commentId,
+                'None',
+                postId,
+                userId
+            )
+            const newLike = new LikeOfCommentModel(newLikeInstance);
+            this.commentRepository.createLike(newLike);
+
+            return commentId;
         } catch(e: unknown) {
             console.error('something wrongg in create comment service');
             throw new Error('something wrongg in create comment service');
         }
-    },
+    }
 
     async update(id: string, postParam: UpdatePostDto): Promise<void> {
-        return postsRepository.update(id, postParam);
-    },
+        return this.postsRepository.update(id, postParam);
+    }
 
     async delete(id: string): Promise<void> {
-        return postsRepository.delete(id);
+        return this.postsRepository.delete(id);
     }
 };

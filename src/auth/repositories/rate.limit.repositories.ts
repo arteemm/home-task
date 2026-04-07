@@ -1,46 +1,59 @@
-import { rateLimitCollection } from '../../repositories/db';
-import { RateLimitData, RateLimitDataList } from '../types/rate-limt-data';
+import { RateLimitDocument, RateLimitModel } from '../infrastructure/mongoose/rate.limit.shema';
 import { WithId } from 'mongodb';
+import { inject, injectable } from 'inversify';
+import { TYPES } from '../../ioc/types';
+import { IRateLimitDB } from '../types/rate-limt-interface';
+import { RateLimitData } from '../domain/rate.limit.entity';
 
 
-export const rateLimitRepository = {
-    async getLimitsByUrlAndIp(limitId: string): Promise<WithId<RateLimitDataList> | null> {
-        const result = await rateLimitCollection.findOne({limitId: limitId});
+@injectable()
+export class RateLimitRepository {
+    constructor(){}
+
+    async getLimitsByUrlAndIp(limitId: string): Promise<IRateLimitDB | null> {
+        const result = await RateLimitModel.findOne({limitId: limitId});
 
         if(!result) {
             return null;
         }
 
         return result;
-    },
+    }
 
-    async createLimitsArray(limitId: string, data: RateLimitData): Promise<string> {
-        const result = await rateLimitCollection.insertOne({
-            limitId: limitId,
-            rateLimits: [data]
-        });
+    async createLimitsArray(data: RateLimitDocument): Promise<string> {
+        const result = await data.save();
 
-        return result.insertedId.id.toString();
-    },
+        return result._id.toString();
+    }
 
-    async updateLastActiveDate(limitId: string, data: RateLimitData): Promise<WithId<RateLimitDataList> | null> {
+    async updateLastActiveDate(limitId: string, data: RateLimitData): Promise<RateLimitDocument | null> {
+        const rateLimit = await RateLimitModel.findOne({limitId: limitId});
+
+        if (!rateLimit) {
+            throw new Error('something in updateLastActiveDate');
+        }
+
         try {
-            await rateLimitCollection.updateOne({limitId: limitId}, {
-                $push: {rateLimits: data}
-            });
+            rateLimit.rateLimits.push(data);
+            await rateLimit.save();
 
-            return await this.getLimitsByUrlAndIp(limitId);
+            return rateLimit;
         } catch(e) {
             console.error(e);
             throw new Error('something wrong in update last active session');
         }
-    },
+    }
 
     async deleteAllActivities(limitId: string): Promise<void> {
+        const rateLimit = await RateLimitModel.findOne({limitId: limitId});
+
+        if (!rateLimit) {
+            throw new Error('something in deleteAllActivities');
+        }
+
         try {
-            await rateLimitCollection.updateOne({limitId: limitId}, {
-                $set: { rateLimits: [] }
-            });
+            rateLimit.rateLimits = [];
+            await rateLimit.save();
         } catch(e) {
             console.error(e);
             throw new Error('something wrong in delete last active session');

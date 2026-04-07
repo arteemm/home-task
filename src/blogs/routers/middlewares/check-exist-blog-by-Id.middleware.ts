@@ -1,7 +1,10 @@
 import { Request, Response, NextFunction  } from 'express';
-import { blogsQueryRepository } from '../../repositories/blogs.query.repositories';
+import { BlogsQueryRepository } from '../../repositories/blogs.query.repositories';
 import { HttpResponceCodes } from '../../../core/constants/responseCodes';
+import { container } from '../../../ioc/composition-root';
 
+
+const blogsQueryRepository: BlogsQueryRepository = container.resolve(BlogsQueryRepository);
 
 export async function checkExistBlogByIdMiddleware (req: Request, res: Response, next: NextFunction) {
     const id = req.params.id.toString();

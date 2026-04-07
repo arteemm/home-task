@@ -1,12 +1,12 @@
 import { Request, Response } from 'express';
-import { usersQueryRepository } from '../../users/repositories/user.query.repository';
+import { UsersQueryRepository } from '../../users/repositories/user.query.repository';
 import { HttpResponceCodes } from '../../core/constants/responseCodes';
 import { LoginUserViewModel } from '../types/login-user-view-model';
 import { LoginUserDto } from '../types/login-user-dto';
 import { SessionDto } from '../../securityDevices/types/session.dto';
 import { AuthService } from '../domain/auth-service';
 import { inject, injectable } from 'inversify';
-import { rateLimitRepository } from '../repositories/rate.limit.repositories';
+import { RateLimitRepository } from '../repositories/rate.limit.repositories';
 import { CreateUserDto } from '../../users/types/create-user-dto';
 import { API_ERRORS } from '../../core/constants/apiErrors';
 
@@ -15,11 +15,13 @@ import { API_ERRORS } from '../../core/constants/apiErrors';
 export class AuthController {
     constructor(
         @inject(AuthService) protected authService: AuthService,
+        @inject(RateLimitRepository) protected rateLimitRepository: RateLimitRepository,
+        @inject(UsersQueryRepository) protected usersQueryRepository: UsersQueryRepository,
     ) {}
 
     async getLoginedUser(req: Request, res: Response<LoginUserViewModel>) {
         const userId = req.userId as string;
-        const user = await usersQueryRepository.findById(userId);
+        const user = await this.usersQueryRepository.findById(userId);
 
         if (!user) {
             return res.sendStatus(HttpResponceCodes.NOT_AUTHORIZED_401);
@@ -68,7 +70,7 @@ export class AuthController {
             res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: true });
             
             const limitId = Buffer.from(sessionDto.ip + sessionDto.originalUrl).toString('base64');
-            await rateLimitRepository.deleteAllActivities(limitId);
+            await this.rateLimitRepository.deleteAllActivities(limitId);
             return res.status(HttpResponceCodes.OK_200).send({accessToken: accessToken});
         } catch(e: unknown) {
             const err = e as { message: string };
@@ -79,7 +81,7 @@ export class AuthController {
     
             throw new Error('some error in loginUser');
         }
-    };
+    }
 
     async logoutUserHandler(req: Request<{}, {}, LoginUserDto, {}>, res: Response) {
         const refreshToken = req.cookies.refreshToken;
@@ -98,13 +100,14 @@ export class AuthController {
             throw new Error('some error in logout user');
         }
     }
+
     async registrationUser(req: Request<{}, {}, CreateUserDto, {}>, res: Response) {
         try {
             const { login, password, email } = req.body;
             const responce = await this.authService.createUser({ login, password, email });
     
             const limitId = Buffer.from(req.ip + req.originalUrl).toString('base64');
-            await rateLimitRepository.deleteAllActivities(limitId);
+            await this.rateLimitRepository.deleteAllActivities(limitId);
             return res.sendStatus(HttpResponceCodes.NO_CONTENT_204);
         } catch(e: unknown) {
             const err = e as { message: string };
@@ -118,7 +121,7 @@ export class AuthController {
     
             throw new Error('some error in create user handler');
         }
-    };
+    }
 
     async registrationConfirmationUser(req: Request<{}, {}, {code: string}, {}>, res: Response) {
         try {
@@ -126,7 +129,7 @@ export class AuthController {
             const responce = await this.authService.registrationConfirmation(code);
         
             const limitId = Buffer.from(req.ip + req.originalUrl).toString('base64');
-            await rateLimitRepository.deleteAllActivities(limitId);
+            await this.rateLimitRepository.deleteAllActivities(limitId);
             return res.sendStatus(HttpResponceCodes.NO_CONTENT_204);
         } catch(e: unknown) {
             const err = e as { message: string };
@@ -144,7 +147,7 @@ export class AuthController {
 
             throw new Error('some error in create user handler');
         }
-    };
+    }
 
     async registrationEmailResending(req: Request<{}, {}, {email: string}, {}>, res: Response) {
         try {
@@ -152,7 +155,7 @@ export class AuthController {
             const responce = await this.authService.registrationEmailResending(email);
 
             const limitId = Buffer.from(req.ip + req.originalUrl).toString('base64');
-            await rateLimitRepository.deleteAllActivities(limitId);
+            await this.rateLimitRepository.deleteAllActivities(limitId);
             return res.sendStatus(HttpResponceCodes.NO_CONTENT_204);
         } catch(e: unknown) {
             const err = e as { message: string };
@@ -166,7 +169,7 @@ export class AuthController {
 
             throw new Error('some error in create user handler');
         }
-    };
+    }
 
     async passwordRecovery(req: Request<{}, {}, {email: string}, {}>, res: Response) {
         try {
@@ -179,7 +182,7 @@ export class AuthController {
             const err = e as { message: string };
             throw new Error('some error in password recovery handler');
         }
-    };
+    }
 
     async newPasswordConfirmation(req: Request<{}, {}, {newPassword: string, recoveryCode: string}, {}>, res: Response) {
         try {
@@ -188,11 +191,16 @@ export class AuthController {
         
             const limitIdPasswordRecovery = Buffer.from(req.ip + '/auth/password-recovery').toString('base64');
             const limitIdNewPassword = Buffer.from(req.ip + req.originalUrl).toString('base64');
-            await rateLimitRepository.deleteAllActivities(limitIdPasswordRecovery);
-            await rateLimitRepository.deleteAllActivities(limitIdNewPassword);
+            await this.rateLimitRepository.deleteAllActivities(limitIdPasswordRecovery);
+            await this.rateLimitRepository.deleteAllActivities(limitIdNewPassword);
             return res.sendStatus(HttpResponceCodes.NO_CONTENT_204);
         } catch(e: unknown) {
+            const err = e as { message: string };
+            if (err?.message === 'user is not exist') {
+                return res.status(HttpResponceCodes.BAD_REQUEST_400).send({errorsMessages: [ API_ERRORS.recoveryCode.NOT_FIND ]});
+            }
+
             throw new Error('some error in create user handler');
         }
-    };
+    }
 }

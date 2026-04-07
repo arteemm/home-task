@@ -1,5 +1,6 @@
-import { SecurityDevicesDBtype, CurrentSessions } from '../types/securityDevicesDBtype';
-import { WithId, ObjectId, Collection } from 'mongodb';
+import { ISecurityDevicesDB } from '../types/securityDevicesDBinterface';
+import { SecurityDevicesModel, SecurityDevicesDocument } from '../infrastructure/mongoose/security.devices.shema';
+import { CurrentSessions } from '../domain/security.devices.entity';
 import { API_ERRORS } from '../../core/constants/apiErrors';
 import { inject, injectable } from 'inversify';
 import { TYPES } from '../../ioc/types';
@@ -7,17 +8,17 @@ import { TYPES } from '../../ioc/types';
 
 @injectable()
 export class SecurityDevicesRepository {
-    constructor(@inject(TYPES.SecurityDevicesCollection) private securityDevicesCollection: Collection<SecurityDevicesDBtype>) {}
+    constructor() {}
 
-    async createSession(newEntity: SecurityDevicesDBtype): Promise<string> {
-        const insertResalt = await this.securityDevicesCollection.insertOne(newEntity);
+    async createSession(newEntity: SecurityDevicesDocument): Promise<string> {
+        const insertResalt = await newEntity.save();
 
-        return insertResalt.insertedId.toString();
+        return insertResalt._id.toString();
     }
 
     async addSession(userId: string, newSession: CurrentSessions): Promise<void> {
 
-        const result = await this.securityDevicesCollection.updateOne({userId: userId}, {
+        const result = await SecurityDevicesModel.updateOne({userId: userId}, {
                 $push: {currentSessions: newSession}
             });
 
@@ -27,7 +28,7 @@ export class SecurityDevicesRepository {
     }
 
     async deleteSession(userId: string, deviceId: string): Promise<void> {
-        const result = await this.securityDevicesCollection.updateOne({userId: userId}, {
+        const result = await SecurityDevicesModel.updateOne({userId: userId}, {
             $pull: {
                 currentSessions: { deviceId: deviceId }
             }
@@ -39,14 +40,14 @@ export class SecurityDevicesRepository {
     }
 
     async deleteAllSessionsExceptCurrently(userId: string, deviceId: string): Promise<void> {
-        const sessions = await this.securityDevicesCollection.findOne({
+        const sessions = await SecurityDevicesModel.findOne({
             userId: userId,
             'currentSessions.deviceId': deviceId,
         });
 
         const currentSession = sessions!.currentSessions.find((item: CurrentSessions) => item.deviceId === deviceId) as CurrentSessions;
 
-        const result = await this.securityDevicesCollection.updateOne({userId: userId}, {
+        const result = await SecurityDevicesModel.updateOne({userId: userId}, {
             $set: {
                 currentSessions: [currentSession]
             }
@@ -59,7 +60,7 @@ export class SecurityDevicesRepository {
 
     async updateLastActiveDate(userId: string, data: Omit<CurrentSessions, 'title'>) {
         try {
-            const result = await this.securityDevicesCollection.updateOne({userId: userId, 'currentSessions.deviceId': data.deviceId}, {
+            const result = await SecurityDevicesModel.updateOne({userId: userId, 'currentSessions.deviceId': data.deviceId}, {
                 $set: {
                     'currentSessions.$.ip': data.ip,
                     'currentSessions.$.lastActiveDate': data.lastActiveDate,
@@ -73,7 +74,7 @@ export class SecurityDevicesRepository {
     }
 
     async checkSessionsByUserId(userId: string): Promise<boolean> {
-        const result = await this.securityDevicesCollection.findOne({userId: userId});
+        const result = await SecurityDevicesModel.findOne({userId: userId});
         if(!result) {
             return false;
         }
@@ -82,7 +83,7 @@ export class SecurityDevicesRepository {
     }
 
     async getSessionByDateIatDateAndDeviceId(userId: string, iat: number, deviceId: string): Promise<CurrentSessions | null> {
-        const result = await this.securityDevicesCollection.findOne({
+        const result = await SecurityDevicesModel.findOne({
             userId: userId,
             'currentSessions.lastActiveDate': iat,
             'currentSessions.deviceId': deviceId,
@@ -96,7 +97,7 @@ export class SecurityDevicesRepository {
     }
 
     async checkSessionsByUserIdAndDeviceId(userId: string, deviceId: string): Promise<boolean> {
-        const result = await this.securityDevicesCollection.findOne({
+        const result = await SecurityDevicesModel.findOne({
             userId: userId,
             'currentSessions.deviceId': deviceId,
         });

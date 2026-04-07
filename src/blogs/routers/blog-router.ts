@@ -1,11 +1,4 @@
 import express, { Router } from 'express';
-import { getBlogListHandler } from './handlers/get-blog-list.handler';
-import { getBlogByIdHandler } from './handlers/get-blog.handler';
-import { createBlogHandler } from './handlers/create-blog.handler';
-import { updateBlogHandler } from './handlers/update-blog.handler';
-import { deleteBlogHandler } from './handlers/delete-blog.handler';
-import { getPostsListInBlogHandler } from './handlers/get-posts-list-in-blog';
-import { createPostInBlogHandler } from './handlers/create-post-in-blog';
 import { createBlogValidation, updateBlogValidation } from './body.input-dto.validation-middleware';
 import { createPostInBlogValidation } from '../../posts/routers/body.input-dto.validation-middleware';
 import { checkAuthorizationMiddlewares } from '../../auth/middlewares/check-authorization-middleware';
@@ -13,48 +6,52 @@ import { paginationAndSortingValidation } from '../../core/middlewares/query-pag
 import { BlogSortField } from './input/blog-sort-field';
 import { PostSortField } from '../../posts/routers/input/post-sort-field';
 import { checkExistBlogByIdMiddleware } from './middlewares/check-exist-blog-by-Id.middleware';
+import { container } from '../../ioc/composition-root';
+import { BlogController } from './blog-controller';
 
+
+const blogController = container.resolve(BlogController);
 
 export const blogsRouter: express.Router = Router({});
 
 blogsRouter.get( "/",
   paginationAndSortingValidation(BlogSortField),
-  getBlogListHandler
+  blogController.getBlogListHandler.bind(blogController)
 );
 
 blogsRouter.get( "/:id",
   checkExistBlogByIdMiddleware,
-  getBlogByIdHandler
+  blogController.getBlogByIdHandler.bind(blogController)
 );
 
 blogsRouter.get( "/:id/posts",
   paginationAndSortingValidation(PostSortField),
   checkExistBlogByIdMiddleware,
-  getPostsListInBlogHandler
+  blogController.getPostsListInBlogHandler.bind(blogController)
 );
 
 blogsRouter.post( "/",
   checkAuthorizationMiddlewares,
   createBlogValidation,
-  createBlogHandler
+  blogController.createBlogHandler.bind(blogController)
 );
 
 blogsRouter.post( "/:id/posts",
   checkAuthorizationMiddlewares,
   createPostInBlogValidation,
   checkExistBlogByIdMiddleware,
-  createPostInBlogHandler
+  blogController.createPostInBlogHandler.bind(blogController)
 );
 
 blogsRouter.put("/:id",
   checkAuthorizationMiddlewares,
   updateBlogValidation,
   checkExistBlogByIdMiddleware,
-  updateBlogHandler
+  blogController.updateBlogHandler.bind(blogController)
 );
 
 blogsRouter.delete("/:id",
   checkAuthorizationMiddlewares,
   checkExistBlogByIdMiddleware,
-  deleteBlogHandler
+  blogController.deleteBlogHandler.bind(blogController)
 );
