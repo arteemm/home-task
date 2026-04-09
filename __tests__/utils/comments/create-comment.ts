@@ -36,6 +36,11 @@ export async function createComment(
                     userLogin: user.userLogin,
                 },
                 createdAt: expect.any(String),
+                likesInfo: {
+                    likesCount: 0,
+                    dislikesCount: 0,
+                    myStatus: 'None',
+                }
             });
         }
 
