@@ -41,7 +41,7 @@ export class PostsController {
             page: +queryInput.pageNumber,
             pageSize: +queryInput.pageSize,
             totalCount: totalCount,
-            itemsWithCorrectLikeStatus,
+            items: itemsWithCorrectLikeStatus,
         };
 
         res.status(HttpResponceCodes.OK_200).send(blogViewModel);
