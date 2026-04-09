@@ -14,7 +14,7 @@
     "emitDecoratorMetadata": true,
     "types": ["node", "jest", "express"],
   },
-  "include": ["src/**/*", ],
+  "include": ["src/**/*",  ],
   "exclude": ["__tests__", "dist", "node_modules"],
   "files": ["src/types/index.d.ts"],
 }

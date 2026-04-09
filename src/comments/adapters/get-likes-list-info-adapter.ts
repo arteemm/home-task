@@ -20,8 +20,8 @@ export async function getLikesListInfoAddapter(
             const likeOfComment = likesList?.find(st => item.id === st.commentId);
 
             const likesInfo: LikesInfo = {
-                likesCount: likeOfComment!.likesListofComment!.filter(t => t.likeStatus === 'Like').length,
-                dislikesCount: likeOfComment!.likesListofComment!.filter(t => t.likeStatus === 'Like').length,
+                likesCount: likeOfComment!.likesListofComment!.filter(t => t.likeStatus === 'Like').length || 0,
+                dislikesCount: likeOfComment!.likesListofComment!.filter(t => t.likeStatus === 'Dislike').length || 0,
                 myStatus: 'None',
             }
 
@@ -54,8 +54,8 @@ export async function getLikesListInfoAddapter(
     result = items.map(item => {
             const likeOfComment = likesList?.find(st => item.id === st.commentId);
             const likesInfo: LikesInfo = {
-                likesCount: likeOfComment!.likesListofComment!.filter(t => t.likeStatus === 'Like').length,
-                dislikesCount: likeOfComment!.likesListofComment!.filter(t => t.likeStatus === 'Like').length,
+                likesCount: likeOfComment!.likesListofComment!.filter(t => t.likeStatus === 'Like').length || 0,
+                dislikesCount: likeOfComment!.likesListofComment!.filter(t => t.likeStatus === 'Dislike').length || 0,
                 myStatus: 'None',
             }
 

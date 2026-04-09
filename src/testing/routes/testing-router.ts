@@ -5,6 +5,7 @@ import { CommentModel } from '../../comments/infrastructure/mongoose/comment.she
 import { PostModel } from '../../posts/infrastructure/mongoose/post.shema';
 import { SecurityDevicesModel } from '../../securityDevices/infrastructure/mongoose/security.devices.shema';
 import { UserModel } from '../../users/infrastructure/mongoose/user.shema';
+import { LikeOfCommentModel } from '../../comments/infrastructure/mongoose/like-of-comment.schema';
 import { HttpResponceCodes } from '../../core/constants/responseCodes';
 
 
@@ -21,6 +22,7 @@ testingRouter.delete('/', async (
       PostModel.deleteMany(), 
       SecurityDevicesModel.deleteMany(),
       UserModel.deleteMany(),
+      LikeOfCommentModel.deleteMany(),
     ])
     res.sendStatus(HttpResponceCodes.NO_CONTENT_204);
   });
