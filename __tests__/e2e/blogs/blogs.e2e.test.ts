@@ -1,6 +1,5 @@
 import request from 'supertest';
-import express from 'express';
-import { setupApp } from '../../../src/setup-app';
+import { app } from '../../../src/setup-app';
 import { HttpResponceCodes } from '../../../src/core/constants/responseCodes'; 
 import { BlogViewModel } from '../../../src/blogs/types/blog-view-model';
 import { BLOGS_PATH, TESTING_PATH } from '../../../src/core/constants/paths';
@@ -12,9 +11,9 @@ import mongoose from 'mongoose';
 
  
 describe(BLOGS_PATH, () => {
-    const app = express();
-    setupApp(app);
+    const PORT = 5002;
     const mongoURI = 'mongodb://0.0.0.0:27017/home-task';
+    let server: any;
 
     let testEntity: BlogViewModel = {} as BlogViewModel;
 
@@ -25,6 +24,9 @@ describe(BLOGS_PATH, () => {
 
     afterAll(async () => {
         await mongoose.connection.close();
+        if (server) {
+            server.close();
+        }
     });
 
     it('should return 200 and empty array', async () => {

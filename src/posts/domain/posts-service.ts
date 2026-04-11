@@ -1,4 +1,4 @@
-import { Post } from './post.entity';
+import { PostDocument, PostModel } from './post.entity';
 import { CreatePostDto } from '../types/create-post-dto';
 import { UpdatePostDto } from '../types/update-post-dto';
 import { BlogsRepository } from '../../blogs/repositories/blogs.repository';
@@ -10,7 +10,6 @@ import { CommentModel, CommentDocument } from '../../comments/infrastructure/mon
 import { LikeOfCommentModel } from '../../comments/infrastructure/mongoose/like-of-comment.schema';
 import { LikeOfComment } from '../../comments/domain/like-of-comment.entity';
 import { inject, injectable } from 'inversify';
-import { PostDocument, PostModel } from '../infrastructure/mongoose/post.shema';
 
 
 @injectable()
@@ -30,8 +29,7 @@ export class PostsService {
         const blog = await this.blogsRepository.findById(postDto.blogId);
         const blogName = `${blog?.name}`;
 
-        const newPostInstance: Post = Post.create(postDto, blogName);
-        const newPost = new PostModel(newPostInstance);
+        const newPost = PostModel.createPost(postDto, blogName);
 
         return this.postsRepository.create(newPost); 
     }
@@ -69,8 +67,15 @@ export class PostsService {
         }
     }
 
-    async update(id: string, postParam: UpdatePostDto): Promise<void> {
-        return this.postsRepository.update(id, postParam);
+    async update(id: string, dto: UpdatePostDto): Promise<void> {
+        const post = await this.postsRepository.findById(id);
+
+        if(!post) {
+            throw new Error('post not found')
+        }
+
+        post.updatePost(dto);
+        return this.postsRepository.update(post);
     }
 
     async delete(id: string): Promise<void> {

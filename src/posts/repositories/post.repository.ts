@@ -1,10 +1,7 @@
-import { PostDocument, PostModel } from '../infrastructure/mongoose/post.shema';
-import { UpdatePostDto } from '../types/update-post-dto';
-import { IPostDB } from '../types/postDBinterface';
+import { PostDocument, PostModel } from '../domain/post.entity';
 import { ObjectId } from 'mongodb';
 import { API_ERRORS } from '../../core/constants/apiErrors';
-import { inject, injectable } from 'inversify';
-import { TYPES } from '../../ioc/types';
+import { injectable } from 'inversify';
 
 
 @injectable()
@@ -18,7 +15,7 @@ export class PostsRepository {
             });
         }
 
-        return PostModel.findOne({_id: new ObjectId(id)});
+        return PostModel.findById(id);
     }
 
     async create(post: PostDocument):  Promise<string> {
@@ -27,17 +24,8 @@ export class PostsRepository {
         return insertResalt._id.toString();
     }
 
-    async update(id: string, postParam: UpdatePostDto): Promise<void> {
-        const matchesResalt = await PostModel.updateOne({_id: new ObjectId(id)}, {$set: {
-            title: postParam.title,
-            shortDescription: postParam.shortDescription,
-            content: postParam.content,
-            blogId: postParam.blogId,
-        }});
-
-        if (matchesResalt.matchedCount < 1) {
-            throw new Error(API_ERRORS.id_not_exist);
-        }
+    async update(post: PostDocument): Promise<void> {
+        await post.save()
     }
 
     async delete(id: string): Promise<void> {

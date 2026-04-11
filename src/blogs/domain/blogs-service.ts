@@ -1,9 +1,8 @@
 import { UpdateBlogDto } from '../types/update-blog-dto';
 import { CreateBlogDto } from '../types/create-blog-dto';
-import { Blog } from './blog.entity';
 import { inject, injectable } from 'inversify';
 import { BlogsRepository } from '../repositories/blogs.repository';
-import { BlogDocument, BlogModel } from '../infrastructure/mongoose/blog.shema';
+import { BlogDocument, BlogModel } from './blog.entity';
 
 
 @injectable()
@@ -16,15 +15,21 @@ export class BlogsService {
         return this.blogsRepository.findById(id);
     }
 
-    async create(blogParam: CreateBlogDto): Promise<string> {
-        const newBlogInstance: Blog = Blog.create(blogParam);
-        const newBlog = new BlogModel(newBlogInstance);
+    async create(dto: CreateBlogDto): Promise<string> {
+        const newBlog = BlogModel.createBlog(dto);
         
         return  this.blogsRepository.create(newBlog);
     }
 
-    async update(id: string, blogParam: UpdateBlogDto): Promise<void> {
-        return  this.blogsRepository.update(id, blogParam);
+    async update(id: string, dto: UpdateBlogDto): Promise<void> {
+        const blog = await this.blogsRepository.findById(id);
+
+        if(!blog) {
+            throw new Error('blog not found')
+        }
+
+        blog.updateBlog(dto);
+        return  this.blogsRepository.update(blog);
     }
 
     async delete(id: string): Promise<void> {

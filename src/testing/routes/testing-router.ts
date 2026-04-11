@@ -1,8 +1,8 @@
 import { Router, Request, Response } from 'express';
 import { RateLimitModel } from '../../auth/infrastructure/mongoose/rate.limit.shema';
-import { BlogModel } from '../../blogs/infrastructure/mongoose/blog.shema';
+import { BlogModel } from '../../blogs/domain/blog.entity';
 import { CommentModel } from '../../comments/infrastructure/mongoose/comment.shema';
-import { PostModel } from '../../posts/infrastructure/mongoose/post.shema';
+import { PostModel } from '../../posts/domain/post.entity';
 import { SecurityDevicesModel } from '../../securityDevices/infrastructure/mongoose/security.devices.shema';
 import { UserModel } from '../../users/infrastructure/mongoose/user.shema';
 import { LikeOfCommentModel } from '../../comments/infrastructure/mongoose/like-of-comment.schema';
