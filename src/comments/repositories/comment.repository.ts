@@ -1,22 +1,32 @@
 import { ObjectId } from 'mongodb';
 import { API_ERRORS } from '../../core/constants/apiErrors';
-import { CommentDocument, CommentModel } from '../infrastructure/mongoose/comment.shema';
+import { CommentDocument, CommentModel } from '../domain/comment.entity';
 import { injectable } from 'inversify';
 import { LikeStatusType } from '../types/like-status.dto';
-import { LikeOfCommentModel, LikeOfCommentDocument } from '../infrastructure/mongoose/like-of-comment.schema';
+import { LikeOfCommentModel, LikeofCommentDocument } from '../domain/like-of-comment.entity';
 
 
 @injectable()
 export class CommentRepository {
     constructor() {}
 
-    async create(newEntity: CommentDocument): Promise<string> {
+    async findById(id: string): Promise<CommentDocument | null> {
+        if (!ObjectId.isValid(id)) {
+            return new Promise((res, rej) => {
+                res(null)
+            });
+        }
+
+        return CommentModel.findById(id);
+    }
+
+    async saveComment(newEntity: CommentDocument): Promise<string> {
         const insertResalt = await newEntity.save();
 
         return insertResalt._id.toString();
     }
 
-     async createLike(like: LikeOfCommentDocument): Promise<void> {
+     async saveLike(like: LikeofCommentDocument): Promise<void> {
         await like.save();
      }
 

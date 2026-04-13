@@ -1,4 +1,4 @@
-import mongoose, { HydratedDocument, model, Model, InferSchemaType } from 'mongoose';
+import mongoose, { HydratedDocument, model, Model } from 'mongoose';
 import { CreateBlogDto } from '../types/create-blog-dto';
 import { UpdateBlogDto } from '../types/update-blog-dto';
 import { API_ERRORS } from '../../core/constants/apiErrors';

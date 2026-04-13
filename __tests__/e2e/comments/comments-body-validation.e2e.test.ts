@@ -1,6 +1,5 @@
 import request from 'supertest';
-import express from 'express';
-import { setupApp } from '../../../src/setup-app';
+import { app } from '../../../src/setup-app';
 import { HttpResponceCodes } from '../../../src/core/constants/responseCodes'; 
 import { BlogViewModel } from '../../../src/blogs/types/blog-view-model';
 import { PostViewModel } from '../../../src/posts/types/post-view-model';
@@ -21,10 +20,10 @@ import mongoose from 'mongoose';
 
 
 describe('Comments API body validation check', () => {
-    const app = express();
-    setupApp(app);
-
+    const PORT = 5002;
     const mongoURI = 'mongodb://0.0.0.0:27017/home-task';
+    let server: any;
+
     let blog: BlogViewModel = {} as BlogViewModel;
     let post: PostViewModel ={} as PostViewModel;
     let user: UserViewModel = {} as UserViewModel;
@@ -35,37 +34,40 @@ describe('Comments API body validation check', () => {
         await mongoose.connect(mongoURI);
         await request(app).delete(TESTING_PATH);
     
-            user = await createUser(
-                app,
-                getUserDto(),
-                HttpResponceCodes.CREATED_201,
-            );
-            const payload = await loginUser(
-                app,
-                {
-                    loginOrEmail: user.login,
-                    password: getUserDto().password,
-                },
-                HttpResponceCodes.OK_200
-            );
+        user = await createUser(
+            app,
+            getUserDto(),
+            HttpResponceCodes.CREATED_201,
+        );
+        const payload = await loginUser(
+            app,
+            {
+                loginOrEmail: user.login,
+                password: getUserDto().password,
+            },
+            HttpResponceCodes.OK_200
+        );
     
-            accessToken = payload.accessToken;
+        accessToken = payload.accessToken;
     
-            blog = await createBlog(
-                app,
-                getBlogDto(),
-                HttpResponceCodes.CREATED_201,
-            );
+        blog = await createBlog(
+            app,
+            getBlogDto(),
+            HttpResponceCodes.CREATED_201,
+        );
     
-            post = await createPost(
-                app,
-                getPostDto({blogId: blog.id}),
-                HttpResponceCodes.CREATED_201,
-            )
+        post = await createPost(
+            app,
+            getPostDto({blogId: blog.id}),
+            HttpResponceCodes.CREATED_201,
+        )
     });
 
     afterAll(async () => {
         await mongoose.connection.close();
+        if (server) {
+            server.close();
+        }
     });
 
     it('shouldn\'t create comment with incorrect data , 400', async () => {

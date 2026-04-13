@@ -1,6 +1,6 @@
 import request from 'supertest';
 import express from 'express';
-import { setupApp } from '../../../src/setup-app';
+import { app } from '../../../src/setup-app';
 import { HttpResponceCodes } from '../../../src/core/constants/responseCodes';
 import { CreateUserDto } from '../../../src/users/types/create-user-dto';
 import { API_ERRORS } from '../../../src/core/constants/apiErrors';
@@ -13,15 +13,22 @@ import mongoose from 'mongoose';
 
 
 describe('User API body validation check', () => {
-    const app = express();
-    setupApp(app);
+    const PORT = 5002;
     const mongoURI = 'mongodb://0.0.0.0:27017/home-task';
+    let server: any;
 
     let testEntity: UserViewModel = {} as UserViewModel;
 
     beforeAll(async () => {
         await mongoose.connect(mongoURI);
         await request(app).delete(TESTING_PATH);
+    });
+
+    afterAll(async () => {
+        await mongoose.connection.close();
+        if (server) {
+            server.close();
+        }
     });
 
     it('shouldn\'t login user with incorrect input data, 400', async () => {
@@ -109,8 +116,4 @@ describe('User API body validation check', () => {
         .set('Cookie', [`refreshToken=${'refreshToken'}`])
         .expect(HttpResponceCodes.NOT_AUTHORIZED_401);
     });
-
-    afterAll(async () => {
-        await mongoose.connection.close();
-    })
 });

@@ -3,8 +3,7 @@ import bcrypt from 'bcrypt';
 import { JwtService } from '../adapters/jwt.service';
 import { UserService } from '../../users/domain/user-service';
 import { CreateUserDto } from '../../users/types/create-user-dto';
-import { User } from '../../users/domain/user.entity';
-import { UserModel } from '../../users/infrastructure/mongoose/user.shema'
+import { UserModel } from '../../users/domain/user.entity';
 import { NodeMailerManager } from '../adapters/nodeMailer-manager';
 import { EmailExamples } from '../adapters/emailExamples';
 import { add } from 'date-fns';
@@ -99,15 +98,14 @@ export class AuthService {
             throw new Error('email is not unique')
         }
 
-        const newUserInstance = User.create(
+        const newUser = UserModel.createUser(
             dto.login,
             dto.email,
             passwordHash,
-            passwordSalt,
+            passwordSalt
         );
-
-        const newUser = new UserModel(newUserInstance);
-        const createResult = await this.usersRepository.create(newUser);
+    
+        const createResult = await this.usersRepository.saveUser(newUser);
 
         try {
             await this.nodeMailerManager.sendEmailConfirmationMessage(

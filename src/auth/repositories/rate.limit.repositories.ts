@@ -1,8 +1,5 @@
-import { RateLimitDocument, RateLimitModel } from '../infrastructure/mongoose/rate.limit.shema';
-import { WithId } from 'mongodb';
-import { inject, injectable } from 'inversify';
-import { TYPES } from '../../ioc/types';
-import { IRateLimitDB } from '../types/rate-limt-interface';
+import { RateLimitDocument, RateLimitModel } from '../domain/rate.limit.entity';
+import { injectable } from 'inversify';
 import { RateLimitData } from '../domain/rate.limit.entity';
 
 
@@ -10,7 +7,7 @@ import { RateLimitData } from '../domain/rate.limit.entity';
 export class RateLimitRepository {
     constructor(){}
 
-    async getLimitsByUrlAndIp(limitId: string): Promise<IRateLimitDB | null> {
+    async getLimitsByUrlAndIp(limitId: string): Promise<RateLimitDocument | null> {
         const result = await RateLimitModel.findOne({limitId: limitId});
 
         if(!result) {

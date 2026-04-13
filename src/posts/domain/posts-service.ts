@@ -5,10 +5,8 @@ import { BlogsRepository } from '../../blogs/repositories/blogs.repository';
 import { PostsRepository } from '../repositories/post.repository';
 import { CommentRepository } from '../../comments/repositories/comment.repository';
 import { UsersQueryRepository } from '../../users/repositories/user.query.repository';
-import { Comment } from '../../comments/domain/comment.entity';
-import { CommentModel, CommentDocument } from '../../comments/infrastructure/mongoose/comment.shema';
-import { LikeOfCommentModel } from '../../comments/infrastructure/mongoose/like-of-comment.schema';
-import { LikeOfComment } from '../../comments/domain/like-of-comment.entity';
+import { CommentModel, CommentDocument } from '../../comments/domain/comment.entity';
+import { LikeofCommentDocument, LikeOfCommentModel } from '../../comments/domain/like-of-comment.entity';
 import { inject, injectable } from 'inversify';
 
 
@@ -41,24 +39,10 @@ export class PostsService {
     ) {
         try {
             const user = await this.usersQueryRepository.findById(userId);
-
-            const newCommentInstance: Comment = Comment.create(
-                content,
-                userId,
-                user!.login,
-                postId,
-            );
-            const newComment = new CommentModel(newCommentInstance);
-            const commentId = await this.commentRepository.create(newComment);
-
-            const newLikeInstance = LikeOfComment.create(
-                commentId,
-                'None',
-                postId,
-                userId
-            )
-            const newLike = new LikeOfCommentModel(newLikeInstance);
-            this.commentRepository.createLike(newLike);
+            const newComment = CommentModel.createComment(content, userId, user!.login, postId);
+            const commentId = await this.commentRepository.saveComment(newComment);
+            const newLike = LikeOfCommentModel.createLikeOfComment(commentId, 'None', postId, userId);
+            await this.commentRepository.saveLike(newLike);
 
             return commentId;
         } catch(e: unknown) {

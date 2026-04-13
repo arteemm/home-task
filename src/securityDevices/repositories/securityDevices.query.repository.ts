@@ -1,8 +1,7 @@
 import { SecurityDevicesViewModel } from '../types/securityDevices-view-model';
-import { SecurityDevicesDocument, SecurityDevicesModel } from '../infrastructure/mongoose/security.devices.shema';
+import { SecurityDevicesDocument, SecurityDevicesModel } from '../domain/security.devices.entity';
 import { CurrentSessions } from '../domain/security.devices.entity';
-import { inject, injectable } from 'inversify';
-import { TYPES } from '../../ioc/types';
+import { injectable } from 'inversify';
 
 
 @injectable()

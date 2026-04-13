@@ -69,8 +69,6 @@ export class AuthController {
             const {accessToken, refreshToken } = await this.authService.loginUser(loginOrEmail, password, sessionDto);
             res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: true });
             
-            const limitId = Buffer.from(sessionDto.ip + sessionDto.originalUrl).toString('base64');
-            await this.rateLimitRepository.deleteAllActivities(limitId);
             return res.status(HttpResponceCodes.OK_200).send({accessToken: accessToken});
         } catch(e: unknown) {
             const err = e as { message: string };

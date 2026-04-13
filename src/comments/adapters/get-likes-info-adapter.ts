@@ -15,13 +15,13 @@ export async function getLikesInfoAddapter(commentId: string, req: Request, comm
     
 
     if (userId) {
-        const userLikeInfo = comment?.find(item => item.userId === userId);
+        const userLikeInfo = comment?.likesListofComment?.find(item => item.userId === userId);
         if (userLikeInfo) result.myStatus = userLikeInfo.likeStatus;
     }
     
 
-    result.likesCount = comment!.filter(item => item.likeStatus === 'Like').length;
-    result.dislikesCount = comment!.filter(item => item.likeStatus === 'Dislike').length;
+    result.likesCount = comment!.likesListofComment!.filter(item => item.likeStatus === 'Like').length;
+    result.dislikesCount = comment!.likesListofComment!.filter(item => item.likeStatus === 'Dislike').length;
 
     return result;
 };
