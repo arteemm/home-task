@@ -3,6 +3,8 @@ import { PostViewModel } from '../types/post-view-model';
 import { WithId, ObjectId } from 'mongodb';
 import { injectable } from 'inversify';
 import { PostModel, PostDocument } from '../domain/post.entity';
+import { LikeOfPostModel, LikeOfPostDocument } from '../domain/like-of-post.entiy';
+import { LikeOfPostViewModel} from '../types/likeOfPost-view-model';
 
 
 @injectable()
@@ -41,6 +43,17 @@ export class PostsQueryRepository {
         const postDB = await PostModel.findOne({_id: new ObjectId(id)})
 
         return postDB ? this._mapToPostViewModel(postDB) : null;
+    }
+
+    async getPostWithLikesByPostId(postId: string, userId?: string | null): Promise<LikeOfPostViewModel | null>{
+        const likeOfPost = await LikeOfPostModel.findOne({postId: postId});
+
+        return likeOfPost!.getLikesCountByPostId(userId);
+    }
+
+    async findAllLikesOfPost(blogId?: string): Promise<LikeOfPostDocument[]> {
+        const filter = blogId ? { blogId: blogId } : {};
+        return LikeOfPostModel.find(filter);
     }
 
     _mapToPostViewModel(data: WithId<PostDocument>): PostViewModel {

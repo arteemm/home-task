@@ -58,7 +58,8 @@ interface UserStatic {
 }
 
 interface UserMethods {
-    // updateBlog(dto: UpdateBlogDto): void;
+    confirm(): void;
+    updateEmailConfirmationCode(): string;
 }
 
 export class UserEntity {
@@ -71,7 +72,6 @@ export class UserEntity {
         public emailConfirmation: EmailConfirmation,
         public passwordRecovery: PasswordRecovery,
     ) {}
-
 }
 
 UserSchema.loadClass(UserEntity);
@@ -108,7 +108,34 @@ UserSchema.static('createUser', function(login: string, email: string, passwordH
             throw new Error(API_ERRORS.login.IS_TOO_LONG.message)
         }
 
-        return user;
-    });
+    return user;
+});
+
+UserSchema.method('confirm', function confirm() {
+    if (this.emailConfirmation.expirationDate < new Date()) {
+        throw new Error('expired code')
+    }
+
+    if (this.emailConfirmation.isConfirmed) {
+        throw new Error('user has already been applied')
+    }
+
+    this.emailConfirmation.isConfirmed = true;
+});
+
+UserSchema.method('updateEmailConfirmationCode()', function updateEmailConfirmationCode(): string {
+        if (this.emailConfirmation.isConfirmed) {
+            throw new Error('user has already been applied')
+        }
+
+        const newCinfirmationCode = crypto.randomUUID();
+        this.emailConfirmation.confirmationCode = newCinfirmationCode
+        this.emailConfirmation.expirationDate = add(new Date(), {
+            hours: 1,
+            // minutes: 1,
+        });
+
+        return newCinfirmationCode;
+});
 
 export const UserModel = model<User, UserModel>('users', UserSchema);

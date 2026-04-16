@@ -38,16 +38,16 @@ export class UsersRepository {
         return UserModel.findOne({ 'passwordRecovery.recoveryCode': code });
     }
 
-    async updateConfirmationStatus(id: string): Promise<void> {
-        const matchesResalt = await UserModel.updateOne(
-            {_id: new ObjectId(id)},
-            {$set: { 'emailConfirmation.isConfirmed': true }}
-        );
+    // async updateConfirmationStatus(id: string): Promise<void> {
+    //     const matchesResalt = await UserModel.updateOne(
+    //         {_id: new ObjectId(id)},
+    //         {$set: { 'emailConfirmation.isConfirmed': true }}
+    //     );
 
-        if (matchesResalt.matchedCount < 1) {
-            throw new Error(API_ERRORS.id_not_exist);
-        }
-    }
+    //     if (matchesResalt.matchedCount < 1) {
+    //         throw new Error(API_ERRORS.id_not_exist);
+    //     }
+    // }
 
     async updateConfirmationCode(id: string, code: string, expirationDate: Date ): Promise<void> {
         const matchesResalt = await UserModel.updateOne({_id: new ObjectId(id)}, { $set: {

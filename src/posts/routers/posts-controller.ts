@@ -9,6 +9,9 @@ import { PostsService } from '../domain/posts-service';
 import { UpdatePostDto } from '../types/update-post-dto';
 import { getLikesInfoAddapter } from '../../comments/adapters/get-likes-info-adapter';
 import { getLikesListInfoAddapter } from '../../comments/adapters/get-likes-list-info-adapter';
+import { LikeStatusType } from '../../comments/types/like-status.dto';
+import { PostViewModel } from '../types/post-view-model';
+import { LikeOfPostViewModel } from '../types/likeOfPost-view-model';
 
 
 @injectable()
@@ -49,16 +52,20 @@ export class PostsController {
 
     async getPostListHandler(req: Request, res: Response) {
         const queryInput = setDefaultSortAndPaginationIfNotExist(req.query);
-    
+        const userId = req.userId as string || null;
         const { items, totalCount } = await this.postsQueryRepository.findAll(queryInput);
-    
+        const likesList = await this.postsQueryRepository.findAllLikesOfPost();
         const pagesCount = Math.ceil(totalCount / +queryInput.pageSize);
+        const itemsWithLikes = items?.map(item => {
+            const likeListOfPost = likesList.find(l => l.postId === item.id);
+            return {...item, ...likeListOfPost?.getLikesCountByPostId(userId)};
+        });
         const postsViewModel = {
             pagesCount: pagesCount,
             page: +queryInput.pageNumber,
             pageSize: +queryInput.pageSize,
             totalCount: totalCount,
-            items,
+            items: itemsWithLikes,
         };
     
         res.status(HttpResponceCodes.OK_200).send(postsViewModel);
@@ -67,9 +74,12 @@ export class PostsController {
     async getPostByIdHandler(req: Request, res: Response) {
         try {
             const id = req.params.id.toString();
+            const userId = req.userId as string || null;
     
-            const postViewModel = await this.postsQueryRepository.findById(id)
-            res.status(HttpResponceCodes.OK_200).send(postViewModel);
+            const postViewModel = await this.postsQueryRepository.findById(id);
+            const likeViewModel = await this.postsQueryRepository.getPostWithLikesByPostId(id, userId);
+
+            res.status(HttpResponceCodes.OK_200).send({...postViewModel, ...likeViewModel});
         } catch(e: unknown) {
             res.sendStatus(HttpResponceCodes.InternalServerError);
         }
@@ -77,9 +87,10 @@ export class PostsController {
 
     async createPostsHandler(req: Request<{}, {}, CreatePostDto, {}>, res: Response) {
         const responce = await this.postsService.create(req.body);
-        const postViewModel = await this.postsQueryRepository.findById(responce);
-    
-        return res.status(HttpResponceCodes.CREATED_201).send(postViewModel);
+        const post = await this.postsQueryRepository.findById(responce);
+        const likeViewModel = await this.postsQueryRepository.getPostWithLikesByPostId(post!.id);
+
+        return res.status(HttpResponceCodes.CREATED_201).send({...post, ...likeViewModel});
     }
 
     async createCommentInPostsHandler(req: Request<{ id: string }, {}, { content: string }, {}>, res: Response) {
@@ -99,6 +110,18 @@ export class PostsController {
             const id = req.params.id.toString();
     
             await this.postsService.update(id, req.body);
+            res.sendStatus(HttpResponceCodes.NO_CONTENT_204);
+        }  catch(err: unknown) {
+            res.sendStatus(HttpResponceCodes.InternalServerError);
+        }
+    }
+
+    async updateLikeStatus(req: Request<{id: string}, {}, {likeStatus: LikeStatusType}, {}>, res: Response) {
+        try {
+            const postId = req.params.id.toString();
+            const userId = req.userId as string;
+
+            await this.postsService.updateLikeStatus(postId, userId, req.body);
             res.sendStatus(HttpResponceCodes.NO_CONTENT_204);
         }  catch(err: unknown) {
             res.sendStatus(HttpResponceCodes.InternalServerError);

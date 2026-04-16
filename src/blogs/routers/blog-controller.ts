@@ -52,17 +52,21 @@ export class BlogController {
 
     async getPostsListInBlogHandler(req: Request<{id: string}, {}, {}, PostQueryInput>, res: Response) {
         const blogId = req.params.id.toString();
-    
+        const userId = req.userId as string || null;
         const queryInput = setDefaultSortAndPaginationIfNotExist(req.query);
         const { items, totalCount } = await this.postsQueryRepository.findAll(queryInput, blogId);
-    
+        const likesList = await this.postsQueryRepository.findAllLikesOfPost();
         const pagesCount = Math.ceil(totalCount / +queryInput.pageSize);
+        const itemsWithLikes = items?.map(item => {
+        const likeListOfPost = likesList.find(l => l.postId === item.id);
+            return {...item, ...likeListOfPost?.getLikesCountByPostId(userId)};
+        });
         const blogViewModel = {
             pagesCount: pagesCount,
             page: +queryInput.pageNumber,
             pageSize: +queryInput.pageSize,
             totalCount: totalCount,
-            items,
+            items: itemsWithLikes,
             };
     
         res.status(HttpResponceCodes.OK_200).send(blogViewModel);
@@ -89,7 +93,9 @@ export class BlogController {
         });
         
         const postViewModel = await this.postsQueryRepository.findById(insertResult);
-        return res.status(HttpResponceCodes.CREATED_201).send(postViewModel);
+        const likeViewModel = await this.postsQueryRepository.getPostWithLikesByPostId(postViewModel!.id);
+
+        return res.status(HttpResponceCodes.CREATED_201).send({...postViewModel, ...likeViewModel});
     }
 
     async updateBlogHandler(req: Request<{id: string}, {}, UpdateBlogDto>, res: Response) {

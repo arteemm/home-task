@@ -1,7 +1,9 @@
 import { PostDocument, PostModel } from '../domain/post.entity';
+import { LikeOfPostDocument, LikeOfPostModel } from '../domain/like-of-post.entiy';
 import { ObjectId } from 'mongodb';
 import { API_ERRORS } from '../../core/constants/apiErrors';
 import { injectable } from 'inversify';
+import { StdioNull } from 'node:child_process';
 
 
 @injectable()
@@ -18,13 +20,27 @@ export class PostsRepository {
         return PostModel.findById(id);
     }
 
+    async findLikeOfPostByPostId(postId: string): Promise<LikeOfPostDocument | null> {
+        return LikeOfPostModel.findOne({postId: postId});
+    }
+
     async create(post: PostDocument):  Promise<string> {
         const insertResalt = await post.save(); 
         
         return insertResalt._id.toString();
     }
 
-    async update(post: PostDocument): Promise<void> {
+    async saveLike(likeOfPost: LikeOfPostDocument) {
+        try {
+
+            await likeOfPost.save();
+        } catch(e) {
+            console.error
+        }
+        
+    }
+
+    async savePost(post: PostDocument): Promise<void> {
         await post.save()
     }
 

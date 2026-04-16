@@ -3,6 +3,7 @@ import { RateLimitModel } from '../../auth/domain/rate.limit.entity';
 import { BlogModel } from '../../blogs/domain/blog.entity';
 import { CommentModel } from '../../comments/domain/comment.entity';
 import { PostModel } from '../../posts/domain/post.entity';
+import { LikeOfPostModel } from '../../posts/domain/like-of-post.entiy';
 import { SecurityDevicesModel } from '../../securityDevices/domain/security.devices.entity';
 import { UserModel } from '../../users/domain/user.entity';
 import { LikeOfCommentModel } from '../../comments/domain/like-of-comment.entity';
@@ -23,6 +24,8 @@ testingRouter.delete('/', async (
       SecurityDevicesModel.deleteMany(),
       UserModel.deleteMany(),
       LikeOfCommentModel.deleteMany(),
+      LikeOfCommentModel.deleteMany(),
+      LikeOfPostModel.deleteMany(),
     ])
     res.sendStatus(HttpResponceCodes.NO_CONTENT_204);
   });
