@@ -1,9 +1,8 @@
-import { BlogModel } from '../infrastructure/mongoose/blog.shema';
+import { BlogModel, BlogDocument } from '../domain/blog.entity';
 import { BlogQueryInput } from '../types/blog-query-input';
 import { BlogViewModel } from '../types/blog-view-model';
 import { WithId, ObjectId } from 'mongodb';
 import { injectable } from 'inversify';
-import { IBlogDB } from '../types/blogDBinterface';
 
 
 @injectable()
@@ -27,7 +26,7 @@ export class BlogsQueryRepository {
             .sort({ [sortBy]: sortDirection })
             .skip(skip)
             .limit(+pageSize)  
-            .lean(); 
+            // .lean(); 
 
         const totalCount = await BlogModel.countDocuments(filter);
         return { items: this._mapToListBlogsViewModel(items), totalCount};
@@ -45,7 +44,7 @@ export class BlogsQueryRepository {
         return result ? this._mapToBlogViewModel(result) : null;
     }
 
-    _mapToBlogViewModel(data: WithId<IBlogDB>): BlogViewModel {
+    _mapToBlogViewModel(data: WithId<BlogDocument>): BlogViewModel {
         return {
              id: data._id.toString(),
             name : data.name,
@@ -56,8 +55,8 @@ export class BlogsQueryRepository {
         }
     }
 
-    _mapToListBlogsViewModel(data: WithId<IBlogDB>[]): BlogViewModel[] {
-        return data.map((item: WithId<IBlogDB>) => {
+    _mapToListBlogsViewModel(data: WithId<BlogDocument>[]): BlogViewModel[] {
+        return data.map((item: WithId<BlogDocument>) => {
             return {
                 id: item._id.toString(),
                 name : item.name,

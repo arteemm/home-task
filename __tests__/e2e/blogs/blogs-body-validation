@@ -1,6 +1,6 @@
 import request from 'supertest';
 import express from 'express';
-import { setupApp } from '../../../src/setup-app';
+import { app } from '../../../src/setup-app';
 import { HttpResponceCodes } from '../../../src/core/constants/responseCodes'; 
 import { BlogViewModel } from '../../../src/blogs/types/blog-view-model';
 import { API_ERRORS } from '../../../src/core/constants/apiErrors';
@@ -11,9 +11,9 @@ import mongoose from 'mongoose';
 
 
 describe('Blog API body validation check', () => {
-    const app = express();
-    setupApp(app);
+    const PORT = 5002;
     const mongoURI = 'mongodb://0.0.0.0:27017/home-task';
+    let server: any;
 
     let testEntity: BlogViewModel = {} as BlogViewModel;
 
@@ -24,6 +24,9 @@ describe('Blog API body validation check', () => {
 
     afterAll(async () => {
         await mongoose.connection.close();
+        if (server) {
+            server.close();
+        }
     });
 
     it('shouldn\'t create entity with incorrect input data, 400', async () => {

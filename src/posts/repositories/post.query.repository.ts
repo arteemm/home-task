@@ -1,9 +1,10 @@
-import { IPostDB } from '../types/postDBinterface';
 import { PostQueryInput } from '../types/post-query-input';
 import { PostViewModel } from '../types/post-view-model';
 import { WithId, ObjectId } from 'mongodb';
 import { injectable } from 'inversify';
-import { PostModel } from '../infrastructure/mongoose/post.shema';
+import { PostModel, PostDocument } from '../domain/post.entity';
+import { LikeOfPostModel, LikeOfPostDocument } from '../domain/like-of-post.entiy';
+import { LikeOfPostViewModel} from '../types/likeOfPost-view-model';
 
 
 @injectable()
@@ -26,7 +27,7 @@ export class PostsQueryRepository {
                 .sort({ [sortBy]: sortDirection })
                 .skip(skip)
                 .limit(+pageSize)
-                .lean(); 
+                // .lean(); 
 
             const totalCount = await PostModel.countDocuments(filter);
             return { items: this._mapToListPostsViewModel(items), totalCount};
@@ -44,7 +45,18 @@ export class PostsQueryRepository {
         return postDB ? this._mapToPostViewModel(postDB) : null;
     }
 
-    _mapToPostViewModel(data: WithId<IPostDB>): PostViewModel {
+    async getPostWithLikesByPostId(postId: string, userId?: string | null): Promise<LikeOfPostViewModel | null>{
+        const likeOfPost = await LikeOfPostModel.findOne({postId: postId});
+
+        return likeOfPost!.getLikesCountByPostId(userId);
+    }
+
+    async findAllLikesOfPost(blogId?: string): Promise<LikeOfPostDocument[]> {
+        const filter = blogId ? { blogId: blogId } : {};
+        return LikeOfPostModel.find(filter);
+    }
+
+    _mapToPostViewModel(data: WithId<PostDocument>): PostViewModel {
         return {
             id: data._id.toString(),
             title: data.title,
@@ -56,8 +68,8 @@ export class PostsQueryRepository {
         }
     }
 
-    _mapToListPostsViewModel(data: WithId<IPostDB>[]): PostViewModel[] {
-        return data.map((item: WithId<IPostDB>) => {
+    _mapToListPostsViewModel(data: WithId<PostDocument>[]): PostViewModel[] {
+        return data.map((item: WithId<PostDocument>) => {
             return {
                 id: item._id.toString(),
                 title: item.title,

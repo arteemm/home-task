@@ -1,6 +1,6 @@
 import request from 'supertest';
 import express from 'express';
-import { setupApp } from '../../../src/setup-app';
+import { app } from '../../../src/setup-app';
 import { HttpResponceCodes } from '../../../src/core/constants/responseCodes'; 
 import { UserViewModel } from '../../../src/users/types/user-view-model';
 import { USER_PATH, TESTING_PATH, AUTH_PATH } from '../../../src/core/constants/paths';
@@ -10,9 +10,9 @@ import mongoose from 'mongoose';
 
 
 describe(USER_PATH, () => {
-    const app = express();
-    setupApp(app);
+    const PORT = 5002;
     const mongoURI = 'mongodb://0.0.0.0:27017/home-task';
+    let server: any;
 
     let testEntity: UserViewModel = {} as UserViewModel;
     let accessToken: string;
@@ -21,6 +21,13 @@ describe(USER_PATH, () => {
     beforeAll(async () => {
         await mongoose.connect(mongoURI);
         await request(app).delete(TESTING_PATH);
+    });
+
+    afterAll(async () => {
+        await mongoose.connection.close();
+        if (server) {
+            server.close();
+        }
     });
 
     it('should return 200 and empty array', async () => {
@@ -112,9 +119,4 @@ describe(USER_PATH, () => {
             .set('Cookie', [`refreshToken=${refreshToken}`])
             .expect(HttpResponceCodes.NOT_AUTHORIZED_401);
     });
-
-
-    afterAll(async () => {
-        await mongoose.connection.close();
-    })
 });

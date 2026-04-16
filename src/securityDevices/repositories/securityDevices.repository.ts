@@ -1,9 +1,7 @@
-import { ISecurityDevicesDB } from '../types/securityDevicesDBinterface';
-import { SecurityDevicesModel, SecurityDevicesDocument } from '../infrastructure/mongoose/security.devices.shema';
+import { SecurityDevicesModel, SecurityDevicesDocument } from '../domain/security.devices.entity';
 import { CurrentSessions } from '../domain/security.devices.entity';
 import { API_ERRORS } from '../../core/constants/apiErrors';
-import { inject, injectable } from 'inversify';
-import { TYPES } from '../../ioc/types';
+import { injectable } from 'inversify';
 
 
 @injectable()

@@ -1,55 +1,53 @@
-import { IUserDB } from '../types/userDBInterface';
-import { WithId, ObjectId, Collection } from 'mongodb';
+import { WithId, ObjectId } from 'mongodb';
 import { API_ERRORS } from '../../core/constants/apiErrors';
-import { inject, injectable } from 'inversify';
-import { TYPES } from '../../ioc/types';
-import { UserModel, UserDocument } from '../infrastructure/mongoose/user.shema';
+import { injectable } from 'inversify';
+import { UserModel, UserDocument } from '../domain/user.entity';
 
 
 @injectable()
 export class UsersRepository {
     // constructor(@inject(TYPES.UsersCollection) private usersCollection: Collection<UserDocument>) {}
 
-    async findById(id: string): Promise<WithId<IUserDB> | null>{
+    async findById(id: string): Promise<WithId<UserDocument> | null>{
             if (!ObjectId.isValid(id)) {
                 return new Promise((res, rej) => {
                     res(null)
                 });
             }
 
-            return UserModel.findOne({_id: new ObjectId(id)});
+            return UserModel.findById(id);
     }
 
-    async findByLoginOrEmail(loginOrEmail: string): Promise<WithId<IUserDB> | null>{
+    async findByLoginOrEmail(loginOrEmail: string): Promise<WithId<UserDocument> | null>{
         return UserModel.findOne({
             $or: [{ userName: loginOrEmail }, { email: loginOrEmail }],
         });
     }
 
-    async create(user: UserDocument): Promise<string> {
+    async saveUser(user: UserDocument): Promise<string> {
         const insertResalt = await user.save();
 
         return insertResalt._id.toString();
     }
 
-    async findByConfirmationCode (code: string): Promise<WithId<IUserDB> | null>{
+    async findByConfirmationCode (code: string): Promise<WithId<UserDocument> | null>{
         return UserModel.findOne({ 'emailConfirmation.confirmationCode': code });
     }
 
-    async findByRecoveryCode (code: string): Promise<WithId<IUserDB> | null>{
+    async findByRecoveryCode (code: string): Promise<WithId<UserDocument> | null>{
         return UserModel.findOne({ 'passwordRecovery.recoveryCode': code });
     }
 
-    async updateConfirmationStatus(id: string): Promise<void> {
-        const matchesResalt = await UserModel.updateOne(
-            {_id: new ObjectId(id)},
-            {$set: { 'emailConfirmation.isConfirmed': true }}
-        );
+    // async updateConfirmationStatus(id: string): Promise<void> {
+    //     const matchesResalt = await UserModel.updateOne(
+    //         {_id: new ObjectId(id)},
+    //         {$set: { 'emailConfirmation.isConfirmed': true }}
+    //     );
 
-        if (matchesResalt.matchedCount < 1) {
-            throw new Error(API_ERRORS.id_not_exist);
-        }
-    }
+    //     if (matchesResalt.matchedCount < 1) {
+    //         throw new Error(API_ERRORS.id_not_exist);
+    //     }
+    // }
 
     async updateConfirmationCode(id: string, code: string, expirationDate: Date ): Promise<void> {
         const matchesResalt = await UserModel.updateOne({_id: new ObjectId(id)}, { $set: {

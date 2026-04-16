@@ -1,6 +1,6 @@
 import request from 'supertest';
 import express from 'express';
-import { setupApp } from '../../../src/setup-app';
+import { app } from '../../../src/setup-app';
 import { HttpResponceCodes } from '../../../src/core/constants/responseCodes';
 import { PostViewModel } from '../../../src/posts/types/post-view-model';
 import { API_ERRORS } from '../../../src/core/constants/apiErrors';
@@ -13,9 +13,9 @@ import mongoose from 'mongoose';
 
 
 describe('Post API body validation check', () => {
-    const app = express();
-    setupApp(app);
+    const PORT = 5002;
     const mongoURI = 'mongodb://0.0.0.0:27017/home-task';
+    let server: any;
 
     let testEntity: PostViewModel = {} as PostViewModel;
     let testBlogId: string = '';
@@ -26,7 +26,10 @@ describe('Post API body validation check', () => {
     });
 
     afterAll(async () => {
-        await mongoose.connection.close();
+          await mongoose.connection.close();
+          if (server) {
+              server.close();
+          }
     });
 
 

@@ -8,6 +8,7 @@ import { PostSortField } from '../../posts/routers/input/post-sort-field';
 import { checkExistBlogByIdMiddleware } from './middlewares/check-exist-blog-by-Id.middleware';
 import { container } from '../../ioc/composition-root';
 import { BlogController } from './blog-controller';
+import { accessTokenAutorizationOptionalMiddleware } from '../../comments/routers/middlewares/access-token-autorization-optional-middleware';
 
 
 const blogController = container.resolve(BlogController);
@@ -26,6 +27,7 @@ blogsRouter.get( "/:id",
 
 blogsRouter.get( "/:id/posts",
   paginationAndSortingValidation(PostSortField),
+  accessTokenAutorizationOptionalMiddleware,
   checkExistBlogByIdMiddleware,
   blogController.getPostsListInBlogHandler.bind(blogController)
 );

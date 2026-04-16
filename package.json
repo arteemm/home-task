@@ -7,7 +7,7 @@
     "watch": "tsc -w",
     "dev": "nodemon --inspect dist/index.js",
     "jest": "jest -i --verbose",
-    "jest-w": "jest -i --watch --verbose __tests__/e2e/users/auth.integration.test.ts",
+    "jest-w": "jest -i --watch --verbose __tests__/integration/posts/post.integration.test.ts",
     "lint": "eslint --fix .",
     "format": "prettier --write ."
   },

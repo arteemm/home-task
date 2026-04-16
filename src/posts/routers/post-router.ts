@@ -9,7 +9,8 @@ import { CommentSortField } from '../../comments/routers/input/comment-sort-fiel
 import { checkExistPostByIdMiddleware } from './middlewares/check-exist-post-by-Id.middleware';
 import { container } from '../../ioc/composition-root';
 import { PostsController } from './posts-controller';
-import { accessTokenAutorizationOptionalMiddleware } from '../../comments/routers/middlewares/access-token-autorization-optional-middleware'
+import { accessTokenAutorizationOptionalMiddleware } from '../../comments/routers/middlewares/access-token-autorization-optional-middleware';
+import { likeStatusValidationErr } from '../../comments/routers/body.input-dto.validation-middleware';
 
 
 const postsController = container.resolve(PostsController);
@@ -18,12 +19,14 @@ export const postsRouter: express.Router = Router({});
 
 postsRouter.get(
   "/",
+  accessTokenAutorizationOptionalMiddleware,
   paginationAndSortingValidation(PostSortField),
   postsController.getPostListHandler.bind(postsController)
 );
 
 postsRouter.get(
   "/:id",
+  accessTokenAutorizationOptionalMiddleware,
   checkExistPostByIdMiddleware,
   postsController.getPostByIdHandler.bind(postsController)
 );
@@ -57,6 +60,14 @@ postsRouter.put(
   checkExistPostByIdMiddleware,
   updatePostValidation,
   postsController.updatePostHandler.bind(postsController)
+);
+
+postsRouter.put(
+  "/:id/like-status",
+  accessTokenAutorizationMiddleware,
+  checkExistPostByIdMiddleware,
+  likeStatusValidationErr,
+  postsController.updateLikeStatus.bind(postsController)
 );
 
 postsRouter.delete(

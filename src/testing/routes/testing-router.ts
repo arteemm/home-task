@@ -1,11 +1,12 @@
 import { Router, Request, Response } from 'express';
-import { RateLimitModel } from '../../auth/infrastructure/mongoose/rate.limit.shema';
-import { BlogModel } from '../../blogs/infrastructure/mongoose/blog.shema';
-import { CommentModel } from '../../comments/infrastructure/mongoose/comment.shema';
-import { PostModel } from '../../posts/infrastructure/mongoose/post.shema';
-import { SecurityDevicesModel } from '../../securityDevices/infrastructure/mongoose/security.devices.shema';
-import { UserModel } from '../../users/infrastructure/mongoose/user.shema';
-import { LikeOfCommentModel } from '../../comments/infrastructure/mongoose/like-of-comment.schema';
+import { RateLimitModel } from '../../auth/domain/rate.limit.entity';
+import { BlogModel } from '../../blogs/domain/blog.entity';
+import { CommentModel } from '../../comments/domain/comment.entity';
+import { PostModel } from '../../posts/domain/post.entity';
+import { LikeOfPostModel } from '../../posts/domain/like-of-post.entiy';
+import { SecurityDevicesModel } from '../../securityDevices/domain/security.devices.entity';
+import { UserModel } from '../../users/domain/user.entity';
+import { LikeOfCommentModel } from '../../comments/domain/like-of-comment.entity';
 import { HttpResponceCodes } from '../../core/constants/responseCodes';
 
 
@@ -23,6 +24,8 @@ testingRouter.delete('/', async (
       SecurityDevicesModel.deleteMany(),
       UserModel.deleteMany(),
       LikeOfCommentModel.deleteMany(),
+      LikeOfCommentModel.deleteMany(),
+      LikeOfPostModel.deleteMany(),
     ])
     res.sendStatus(HttpResponceCodes.NO_CONTENT_204);
   });

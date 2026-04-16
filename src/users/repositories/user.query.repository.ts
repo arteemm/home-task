@@ -1,10 +1,8 @@
-import { IUserDB } from '../types/userDBInterface';
 import { UserQueryInput } from '../types/user-query-input';
 import { UserViewModel } from '../types/user-view-model';
-import { WithId, ObjectId, Collection } from 'mongodb';
-import { inject, injectable } from 'inversify';
-import { TYPES } from '../../ioc/types';
-import { UserModel, UserDocument } from '../infrastructure/mongoose/user.shema';
+import { WithId, ObjectId } from 'mongodb';
+import { injectable } from 'inversify';
+import { UserModel, UserDocument } from '../domain/user.entity';
 
 
 @injectable()
@@ -37,7 +35,7 @@ export class UsersQueryRepository  {
             .sort({ [sortBy]: sortDirection })
             .skip(skip)
             .limit(+pageSize)
-            .lean(); 
+            // .lean(); 
 
         const totalCount = await UserModel.countDocuments(filter);
         return { items: this._mapToListUsersViewModel(items), totalCount};
@@ -55,11 +53,11 @@ export class UsersQueryRepository  {
         return userDB ? this._mapToUserViewModel(userDB) : null;
     }
 
-    async findByRecoveryCode (code: string): Promise<WithId<IUserDB> | null>{
+    async findByRecoveryCode (code: string): Promise<WithId<UserDocument> | null>{
         return UserModel.findOne({ 'passwordRecovery.recoveryCode': code });
     }
 
-    _mapToUserViewModel(data: WithId<IUserDB>): UserViewModel {
+    _mapToUserViewModel(data: WithId<UserDocument>): UserViewModel {
         return {
             id: data._id.toString(),
             login: data.userName,
@@ -68,8 +66,8 @@ export class UsersQueryRepository  {
         }
     }
 
-    _mapToListUsersViewModel(data: WithId<IUserDB>[]): UserViewModel[] {
-        return data.map((item: WithId<IUserDB>) => {
+    _mapToListUsersViewModel(data: WithId<UserDocument>[]): UserViewModel[] {
+        return data.map((item: WithId<UserDocument>) => {
             return {
                 id: item._id.toString(),
                 login: item.userName,

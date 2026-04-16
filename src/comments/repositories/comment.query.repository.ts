@@ -1,9 +1,6 @@
-import { ICommentDB } from '../types/commentsDBInterface';
-import { CommentDocument, CommentModel } from '../infrastructure/mongoose/comment.shema';
-import { LikeOfCommentModel, LikeInfoSchemaDocument } from '../infrastructure/mongoose/like-of-comment.schema';
+import { CommentDocument, CommentModel } from '../domain/comment.entity';
 import { CommentQueryInput } from '../../comments/types/comment-query-input';
-import { ILikeOfCommentDB } from '../../comments/types/likeOfCommentInterface';
-import { LikeofCommentInfo } from '../../comments/domain/like-of-comment.entity';
+import { LikeofCommentDocument, LikeOfCommentModel, LikeOfCommentInfo } from '../../comments/domain/like-of-comment.entity';
 import { CommentViewModel } from '../types/commentViewModel';
 import { WithId, ObjectId } from 'mongodb';
 import { injectable } from 'inversify';
@@ -29,7 +26,7 @@ export class CommentsQueryRepository {
             .sort({ [sortBy]: sortDirection })
             .skip(skip)
             .limit(+pageSize)
-            .lean(); 
+            // .lean();
 
         const totalCount = await CommentModel.countDocuments(filter);
         return { items: this._mapToListCommentsViewModel(items), totalCount};
@@ -47,8 +44,8 @@ export class CommentsQueryRepository {
         return commentDB ? this._mapToCommentViewModel(commentDB) : null;
     }
 
-    async findLikeByCommentIdAndUserId(commentId: string, userId: string): Promise<LikeofCommentInfo | null>  {
-        let responce: LikeofCommentInfo | undefined;
+    async findLikeByCommentIdAndUserId(commentId: string, userId: string): Promise<LikeOfCommentInfo | null>  {
+        let responce: LikeOfCommentInfo | undefined;
         try {
             const result = await LikeOfCommentModel.findOne({
                 commentId: commentId,
@@ -72,18 +69,8 @@ export class CommentsQueryRepository {
         return responce;
     }
 
-    async findLikesListByCommentId(commentId: string): Promise<LikeofCommentInfo[] | null>  {
+    async findLikesListByCommentId(commentId: string): Promise<LikeofCommentDocument | null>  {
         const result = await LikeOfCommentModel.findOne({ commentId: commentId });
-
-        if (!result) {
-            return null;
-        }
-
-        return result.likesListofComment;
-    }
-
-    async findLikesListByPostId(postId: string): Promise<ILikeOfCommentDB[] | null>  {
-        const result = await LikeOfCommentModel.find({ 'likesListofComment.postId': postId }).lean();
 
         if (!result) {
             return null;
@@ -92,7 +79,17 @@ export class CommentsQueryRepository {
         return result;
     }
 
-    _mapToCommentViewModel(data: WithId<ICommentDB>): CommentViewModel {
+    async findLikesListByPostId(postId: string): Promise<LikeofCommentDocument[] | null>  {
+        const result = await LikeOfCommentModel.find({ 'likesListofComment.postId': postId });
+
+        if (!result) {
+            return null;
+        }
+
+        return result;
+    }
+
+    _mapToCommentViewModel(data: WithId<CommentDocument>): CommentViewModel {
         return {
             id: data._id.toString(),
             content: data.content,
@@ -109,8 +106,8 @@ export class CommentsQueryRepository {
         }
     }
 
-    _mapToListCommentsViewModel(data: WithId<ICommentDB>[]): CommentViewModel[] {
-        return data.map((item: WithId<ICommentDB>) => {
+    _mapToListCommentsViewModel(data: WithId<CommentDocument>[]): CommentViewModel[] {
+        return data.map((item: WithId<CommentDocument>) => {
             return {
                 id: item._id.toString(),
                 content: item.content,

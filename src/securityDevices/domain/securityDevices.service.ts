@@ -1,6 +1,5 @@
 import { SecurityDevicesRepository } from '../repositories/securityDevices.repository';
-import { SecurityDevices, CurrentSessions } from '../domain/security.devices.entity';
-import { SecurityDevicesDocument, SecurityDevicesModel } from '../infrastructure/mongoose/security.devices.shema';
+import { SecurityDevicesModel, CurrentSessions } from '../domain/security.devices.entity';
 import { JwtService } from '../../auth/adapters/jwt.service';
 import { inject, injectable } from 'inversify';
 
@@ -13,8 +12,7 @@ export class SecurityDevicesService {
     ) {}
 
     async createSession(userId: string, data: CurrentSessions) {
-        const newSessionInstance: SecurityDevices = SecurityDevices.create(userId, data);
-        const newSession = new SecurityDevicesModel(newSessionInstance);
+        const newSession = SecurityDevicesModel.createSecurityDevices(userId, data);
 
         await this.securityDevicesRepository.createSession(newSession);
     }

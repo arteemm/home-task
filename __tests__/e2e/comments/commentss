@@ -1,6 +1,6 @@
 import request from 'supertest';
 import express from 'express';
-import { setupApp } from '../../../src/setup-app';
+import { app } from '../../../src/setup-app';
 import { HttpResponceCodes } from '../../../src/core/constants/responseCodes'; 
 import { BlogViewModel } from '../../../src/blogs/types/blog-view-model';
 import { PostViewModel } from '../../../src/posts/types/post-view-model';
@@ -20,9 +20,9 @@ import mongoose from 'mongoose';
 
  
 describe(COMMENTS_PATH, () => {
-    const app = express();
-    setupApp(app);
+    const PORT = 5002;
     const mongoURI = 'mongodb://0.0.0.0:27017/home-task';
+    let server: any;
 
     let blog: BlogViewModel = {} as BlogViewModel;
     let post: PostViewModel ={} as PostViewModel;
@@ -65,6 +65,9 @@ describe(COMMENTS_PATH, () => {
 
     afterAll(async () => {
         await mongoose.connection.close();
+        if (server) {
+            server.close();
+        }
     });
 
 

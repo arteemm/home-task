@@ -3,8 +3,7 @@ import bcrypt from 'bcrypt';
 import { JwtService } from '../adapters/jwt.service';
 import { UserService } from '../../users/domain/user-service';
 import { CreateUserDto } from '../../users/types/create-user-dto';
-import { User } from '../../users/domain/user.entity';
-import { UserModel } from '../../users/infrastructure/mongoose/user.shema'
+import { UserModel } from '../../users/domain/user.entity';
 import { NodeMailerManager } from '../adapters/nodeMailer-manager';
 import { EmailExamples } from '../adapters/emailExamples';
 import { add } from 'date-fns';
@@ -99,15 +98,14 @@ export class AuthService {
             throw new Error('email is not unique')
         }
 
-        const newUserInstance = User.create(
+        const newUser = UserModel.createUser(
             dto.login,
             dto.email,
             passwordHash,
-            passwordSalt,
+            passwordSalt
         );
-
-        const newUser = new UserModel(newUserInstance);
-        const createResult = await this.usersRepository.create(newUser);
+    
+        const createResult = await this.usersRepository.saveUser(newUser);
 
         try {
             await this.nodeMailerManager.sendEmailConfirmationMessage(
@@ -125,58 +123,34 @@ export class AuthService {
 
     async registrationConfirmation(code: string): Promise<string> {
         const user = await this.usersRepository.findByConfirmationCode(code);
+
         if (!user) {
             throw new Error('user is not exist')
         }
 
-        if (user.emailConfirmation.expirationDate < new Date()) {
-            throw new Error('expired code')
-        }
-
-        if (user.emailConfirmation.isConfirmed) {
-            throw new Error('user has already been applied')
-        }
-
-        const id = user._id.toString();
-
-        try {
-            await this.usersRepository.updateConfirmationStatus(id);
-        } catch(e) {
-            console.error('something wrong in registrationConfirmation service')
-        }
-
-        return id;
+        user.confirm();
+        return this.usersRepository.saveUser(user);
     }
 
-    async registrationEmailResending(email: string): Promise<string> {
+    async registrationEmailResending(email: string): Promise<void> {
         const user = await this.usersRepository.findByLoginOrEmail(email);
+
         if (!user) {
             throw new Error('user is not exist')
         }
 
-        if (user.emailConfirmation.isConfirmed) {
-            throw new Error('user has already been applied')
-        }
-
-        const id = user._id.toString();
-        const newConfirmationCode = crypto.randomUUID();
-        const expirationDate = add(new Date(), {
-                hours: 1,
-                // minutes: 1,
-            });
+        const newCode = user.updateEmailConfirmationCode();
+        await this.usersRepository.saveUser(user);
 
         try {
-            await this.usersRepository.updateConfirmationCode(id, newConfirmationCode, expirationDate);
             await this.nodeMailerManager.sendEmailConfirmationMessage(
                 email,
-                newConfirmationCode,
+                newCode,
                 this.emailExamples.registrationEmail
             );
         } catch(e) {
             console.error('something wrong in registrationConfirmation service')
         }
-
-        return id;
     }
 
     async getNewAccessAndRefreshTokens(userId: string, expiredRefreshToken: string, sessionData: Omit<SessionDto, 'title'>) {

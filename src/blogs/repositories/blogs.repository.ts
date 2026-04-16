@@ -1,5 +1,5 @@
 import { UpdateBlogDto } from '../types/update-blog-dto';
-import { BlogDocument, BlogModel } from '../infrastructure/mongoose/blog.shema';
+import { BlogDocument, BlogModel } from '../domain/blog.entity';
 import { API_ERRORS } from '../../core/constants/apiErrors';
 import { ObjectId } from 'mongodb';
 import { inject, injectable } from 'inversify';
@@ -17,7 +17,7 @@ export class BlogsRepository {
             });
         }
 
-        return BlogModel.findOne({_id: new ObjectId(id)});
+        return BlogModel.findById(id);
     }
 
     async create(blog: BlogDocument): Promise<string> {
@@ -26,16 +26,8 @@ export class BlogsRepository {
         return  insertResalt._id.toString();
     }
 
-    async update(id: string, blogParam: UpdateBlogDto): Promise<void> {
-        const matchesResalt = await BlogModel.updateOne({_id: new ObjectId(id)}, {$set: {
-            name: blogParam.name,
-            description: blogParam.description,
-            websiteUrl: blogParam.websiteUrl,
-        }});
-
-        if (matchesResalt.matchedCount < 1) {
-            throw new Error(API_ERRORS.id_not_exist);
-        }
+    async update(blog: BlogDocument): Promise<void> {
+        await blog.save();
     }
 
     async delete(id: string): Promise<void> {

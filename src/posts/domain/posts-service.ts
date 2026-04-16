@@ -1,16 +1,16 @@
-import { Post } from './post.entity';
+import { PostDocument, PostModel } from './post.entity';
+import { LikeOfPostModel, LikeOfPostDocument } from './like-of-post.entiy';
 import { CreatePostDto } from '../types/create-post-dto';
 import { UpdatePostDto } from '../types/update-post-dto';
 import { BlogsRepository } from '../../blogs/repositories/blogs.repository';
 import { PostsRepository } from '../repositories/post.repository';
 import { CommentRepository } from '../../comments/repositories/comment.repository';
 import { UsersQueryRepository } from '../../users/repositories/user.query.repository';
-import { Comment } from '../../comments/domain/comment.entity';
-import { CommentModel, CommentDocument } from '../../comments/infrastructure/mongoose/comment.shema';
-import { LikeOfCommentModel } from '../../comments/infrastructure/mongoose/like-of-comment.schema';
-import { LikeOfComment } from '../../comments/domain/like-of-comment.entity';
+import { CommentModel, CommentDocument } from '../../comments/domain/comment.entity';
+import { LikeofCommentDocument, LikeOfCommentModel } from '../../comments/domain/like-of-comment.entity';
 import { inject, injectable } from 'inversify';
-import { PostDocument, PostModel } from '../infrastructure/mongoose/post.shema';
+import { LikeStatusType } from '../../comments/types/like-status.dto';
+
 
 
 @injectable()
@@ -30,10 +30,12 @@ export class PostsService {
         const blog = await this.blogsRepository.findById(postDto.blogId);
         const blogName = `${blog?.name}`;
 
-        const newPostInstance: Post = Post.create(postDto, blogName);
-        const newPost = new PostModel(newPostInstance);
+        const newPost = PostModel.createPost(postDto, blogName);
+        const postId = await this.postsRepository.create(newPost);
+        const newLike = LikeOfPostModel.createLikeOfPost(postId, postDto.blogId);
+        await this.postsRepository.saveLike(newLike);
 
-        return this.postsRepository.create(newPost); 
+        return postId;
     }
 
     async creteCommentInPost(
@@ -43,24 +45,10 @@ export class PostsService {
     ) {
         try {
             const user = await this.usersQueryRepository.findById(userId);
-
-            const newCommentInstance: Comment = Comment.create(
-                content,
-                userId,
-                user!.login,
-                postId,
-            );
-            const newComment = new CommentModel(newCommentInstance);
-            const commentId = await this.commentRepository.create(newComment);
-
-            const newLikeInstance = LikeOfComment.create(
-                commentId,
-                'None',
-                postId,
-                userId
-            )
-            const newLike = new LikeOfCommentModel(newLikeInstance);
-            this.commentRepository.createLike(newLike);
+            const newComment = CommentModel.createComment(content, userId, user!.login, postId);
+            const commentId = await this.commentRepository.saveComment(newComment);
+            const newLike = LikeOfCommentModel.createLikeOfComment(commentId, 'None', postId, userId);
+            await this.commentRepository.saveLike(newLike);
 
             return commentId;
         } catch(e: unknown) {
@@ -69,8 +57,27 @@ export class PostsService {
         }
     }
 
-    async update(id: string, postParam: UpdatePostDto): Promise<void> {
-        return this.postsRepository.update(id, postParam);
+    async update(id: string, dto: UpdatePostDto): Promise<void> {
+        const post = await this.postsRepository.findById(id);
+
+        if(!post) {
+            throw new Error('post not found')
+        }
+
+        post.updatePost(dto);
+        return this.postsRepository.savePost(post);
+    }
+
+    async updateLikeStatus(postId: string, userId: string, dto: {likeStatus: LikeStatusType}): Promise<void> {
+        const likeOfPost = await this.postsRepository.findLikeOfPostByPostId(postId);
+        const user = await this.usersQueryRepository.findById(userId);
+
+        if(!likeOfPost) {
+            throw new Error('likeOfPost not found')
+        }
+
+        likeOfPost.updateLikeOfPostByUser(dto.likeStatus, userId, user!.login);
+        await this.postsRepository.saveLike(likeOfPost);
     }
 
     async delete(id: string): Promise<void> {
