@@ -101,7 +101,7 @@ LikeOfPostSchema.method('getLikesCountByPostId', function(userId?: string | null
     result.extendedLikesInfo.dislikesCount = this.extendedLikeOfPostInfo.filter(item => item.likeStatus === 'Dislike').length;
 
     if (result.extendedLikesInfo.likesCount > 0) {
-        result.extendedLikesInfo.newestLikes = this.extendedLikeOfPostInfo.slice(-3).filter(item => item.likeStatus === 'Like').map(item => {
+        result.extendedLikesInfo.newestLikes = this.extendedLikeOfPostInfo.slice(-3).filter(item => item.likeStatus === 'Like').reverse().map(item => {
             return {
                 addedAt: item.createdAt,
                 userId: item.userId,
